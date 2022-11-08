@@ -1,0 +1,82 @@
+:root{
+	--light1: #d0bdf4;
+	--light2: #c0a7f0;
+	--dark1: #9870e6;
+	--dark2: #7138de;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/Manrope-400.ttf");
+}
+@font-face {
+  font-family: "Manrope";
+  font-weight: 700;
+  src: url("/fonts/Manrope-700.ttf");
+}
+
+@font-face {
+  font-family: "PT Serif";
+  src: url("/fonts/PTSerif-400.ttf");
+}
+@font-face {
+  font-family: "PT Serif";
+  font-weight: 700;
+  src: url("/fonts/PTSerif-700.ttf");
+}
+
+body{
+	background: var(--light1);
+	font-family: "PT Serif";
+}
+
+h1, h2, h3, h4, h5, h6, input, button, .button-group label{
+	font-family: "Manrope";
+}
+
+.container{
+	max-width: 1500px;
+	margin: 0 auto;
+}
+
+h1{
+	text-align: center;
+}
+
+a{
+	color: var(--dark2);
+	text-decoration: none;
+}
+
+a:hover{
+	color: var(--dark1);
+}
+
+button, a.button{
+	display: inline-block;
+	background: var(--dark1);
+	border: 1px solid var(--dark2);
+	border-radius: 5px;
+	margin: 0 5px 0 5px;
+	cursor: pointer;
+	padding: 5px;
+	color: #111;
+}
+
+button:hover{
+	background: var(--dark2);
+}
+
+.centered{
+	display: flex;
+	justify-content: center;
+}
+
+input[type=file]{
+	margin-left: 5px;
+}
+menu{
+	list-style-type: none;
+	display: flex;
+	gap: 0.7em;
+}
