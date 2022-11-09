@@ -38,7 +38,7 @@ function findNextNeighbour(neighbours, validNeighbours, used){
 
 function findEnclosing(start, point, polygons){
 	for(let i = 0; i < polygons.length; i++){
-		if(pointsWithinPolygon(point, polygons[i]).features.length > 0) return i + start;
+		if(pointsWithinPolygon(point, polygons[i]).features.length > 0) return i + start + 1;
 	}
 	return undefined;
 }
@@ -52,23 +52,30 @@ export default function groupBorders(featureCollection, propertyName){
 	let categories = {};
 	let categoryNeighbours = {};
 	for(let i = 0; i < featureCollection.features.length; i++){
-		const prop = featureCollection.features[i].properties[propertyName];
-		if(prop == undefined) continue;
-		if(!categories[prop]){
-			categories[prop] = [];
-			categoryNeighbours[prop] = {};
+		let properties = featureCollection.features[i].properties[propertyName];
+		if(properties != null && typeof properties[Symbol.iterator] === 'function'){
+			properties = [properties];
+		}
+		for(let prop of properties){
+			if(prop == undefined) continue;
+			if(!categories[prop]){
+				categories[prop] = [];
+				categoryNeighbours[prop] = {};
+			}
 		}
 		if(tessellation.features[i] && tessellation.features[i].geometry.type == "Polygon"){ // takes care of duplicates and weird edges
 			const vertices = tessellation.features[i].geometry.coordinates[0].map(x => x.join(",")).slice(1); // stringifying everything saves time on array comparisons and removing duplicate vertices from the beginning / end
-			categories[prop].push(vertices);
 			let l = vertices.length;
-			for(let i = 0; i < l; i++){
-				let currentVertex = vertices[i];
-				if(!categoryNeighbours[prop][currentVertex]){
-					categoryNeighbours[prop][currentVertex] = [];
+			for(let prop of properties){
+			categories[prop].push(vertices);
+				for(let i = 0; i < l; i++){
+					let currentVertex = vertices[i];
+					if(!categoryNeighbours[prop][currentVertex]){
+						categoryNeighbours[prop][currentVertex] = [];
+					}
+					categoryNeighbours[prop][currentVertex].push(vertices[(i-1+l) % l]);
+					categoryNeighbours[prop][currentVertex].push(vertices[(i+1) % l]);
 				}
-				categoryNeighbours[prop][currentVertex].push(vertices[(i-1+l) % l]);
-				categoryNeighbours[prop][currentVertex].push(vertices[(i+1) % l]);
 			}
 		}
 	}
