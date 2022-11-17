@@ -44,9 +44,11 @@ const osmButtons = [
 
 const correctnessStyles = {
 	wrong: [169, 50, 38],
-	unselected: [31, 97, 141],
 	correct: [34, 153, 84],
-	force: [255, 255, 0]
+	unselected: [31, 97, 141],
+	force: [255, 255, 0],
+	roundWrong: [255, 165, 0],
+	hovering: [255, 255, 255]
 };
 
 export default function MapQuizPage(props) {
@@ -67,20 +69,20 @@ export default function MapQuizPage(props) {
 	const [mapVisible, setMapVisible] = useState(true);
 	const [forceClick, setForceClick] = useState(true);
 	const [maxTries, setMaxTries] = useState(1);
-	const [currentTries, setCurrentTries] = useState(0);
-	const [hovering, setHovering] = useState(false);
+	const [hovering, setHovering] = useState("");
+	const [roundWrong, setRoundWrong] = useState([]);
 	const [questionCount, setQuestionCount] = useState(0); // forcing a rerender
 	const forceRerender = () => setQuestionCount(questionCount+1);
 
-	const checkAnswer = (key) => {
+	const checkAnswer = (layerKey, jsonKey) => {
 		if(quiz.questions.length === 0) return;
-		if(key == "correct" || key == "wrong") return;
-		const isCorrect = quiz.checkAnswer(key, currentTries < maxTries);
+		if(layerKey == "correct" || layerKey == "wrong") return;
+		const isCorrect = quiz.checkAnswer(jsonKey, roundWrong.length < maxTries);
 		if(!isCorrect){
-			setCurrentTries(currentTries + 1);
+			setRoundWrong([...roundWrong, jsonKey]);
 		}
 		if(isCorrect || !forceClick){
-			setCurrentTries(0);
+			setRoundWrong([]);
 			quiz.nextQuestion();
 		}
 		forceRerender();
@@ -90,7 +92,7 @@ export default function MapQuizPage(props) {
 	}
 
 	const skipQuestion = () => {
-		setCurrentTries(0);
+		setRoundWrong([]);
 		quiz.skipQuestion();
 		forceRerender();
 	}
@@ -100,34 +102,44 @@ export default function MapQuizPage(props) {
 			"current": [],
 			"wrong": [],
 			"unselected": [],
-			"correct": []
+			"correct": [],
+			"roundWrong": [],
+			"hovering": []
 		};
 		if(!quiz.correctness){
 			props.geoJSONs.map(x => layers.current.push(x));
 			return layers;
 		}
 		for(let geo of props.geoJSONs){
+			if(geo.key == hovering){
+				layers.hovering.push(geo);
+			}
 			if(geo.key == quiz.currentQuestionId){
 				layers.current.push(geo);
 			}
 			else{
-				switch(quiz.correctness[geo.key]){
-					case -1:
-						layers.wrong.push(geo);
-						break;
-					case 0:
-						layers.unselected.push(geo);
-						break;
-					case 1:
-						layers.correct.push(geo);
-						break;
+				if(roundWrong.includes(geo.key) && roundWrong.length < maxTries){
+					layers.roundWrong.push(geo);
+				}
+				else{
+					switch(quiz.correctness[geo.key]){
+						case -1:
+							layers.wrong.push(geo);
+							break;
+						case 0:
+							layers.unselected.push(geo);
+							break;
+						case 1:
+							layers.correct.push(geo);
+							break;
+					}
 				}
 			}
 		}
 		return layers;
 	}
 
-	const createGeoJSON = (id, jsons, colour) => {return new GeoJsonLayer({
+	const createGeoJSON = (id, jsons, colour, pickable = true) => {return new GeoJsonLayer({
 		id: id,
 		data: jsons.map(geoJSON => geoJSON.shape),
 		getFillColor: [...colour, 100],
@@ -135,8 +147,8 @@ export default function MapQuizPage(props) {
 		getLineColor: [...colour, 255],
 		getLineWidth: 2,
 		lineWidthUnits: "pixels",
-		pickable: true,
-		onClick: () => checkAnswer(id)
+		pickable,
+		onClick: (e) => checkAnswer(id, e.object.properties.__key)
 	})};
 
 	const layers = getGeoJSONLayers();
@@ -145,7 +157,9 @@ export default function MapQuizPage(props) {
 		createGeoJSON("wrong", layers.wrong, correctnessStyles.wrong),
 		createGeoJSON("correct", layers.correct, correctnessStyles.correct),
 		createGeoJSON("unselected", layers.unselected, correctnessStyles.unselected),
-		createGeoJSON(layers.current[0] ? layers.current[0].key : "tmp", layers.current, currentTries >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
+		createGeoJSON("roundWrong", layers.roundWrong, correctnessStyles.roundWrong),
+		createGeoJSON(layers.current[0] ? layers.current[0].key : "tmp", layers.current, roundWrong.length >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
+		createGeoJSON("hovering", layers.hovering, correctnessStyles.hovering),
 	]
 
 	const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
@@ -294,7 +308,10 @@ export default function MapQuizPage(props) {
 					layers={[MapTiles(mapType), ...geoJSONLayers]}
 					effects={mapVisible? [] : [new PostProcessEffect(triangleBlur,{radius: 5})]}
 					repeat={true}
-					onHover={({object}) => setHovering(Boolean(object))}
+					onHover={({object}) => {
+						if(!object) setHovering("");
+						else setHovering(object.properties.__key);
+					}}
 					getCursor={({isDragging}) => isDragging ? "grabbing" : (hovering ? "pointer" : "default")}
 				/>
 			</div>
@@ -331,7 +348,9 @@ export function getStaticProps({params}){
 			x.shape = JSON.parse(x.shape);
 			const hash = crypto.createHash('sha256');
 			hash.update(x.user+"/"+x.id);
-			x.key = hash.digest('hex'); return x;
+			x.key = hash.digest('hex');
+			x.shape.properties["__key"] = x.key;
+			return x;
 		});
 		const coordsOnly = geoJSONs.map(x => {
 			const poly = getGeoJSONPolygon(x.shape);
