@@ -309,8 +309,8 @@ export default function MapQuizPage(props) {
 					effects={mapVisible? [] : [new PostProcessEffect(triangleBlur,{radius: 5})]}
 					repeat={true}
 					onHover={({object}) => {
-						if(!object) setHovering("");
-						else setHovering(object.properties.__key);
+						if(!object){if(hovering) setHovering("");}
+						else{if(object.properties.__key !== hovering)setHovering(object.properties.__key);}
 					}}
 					getCursor={({isDragging}) => isDragging ? "grabbing" : (hovering ? "pointer" : "default")}
 				/>
