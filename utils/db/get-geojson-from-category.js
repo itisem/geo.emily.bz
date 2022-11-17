@@ -1,4 +1,4 @@
-import relativePathDB from './relative-path-db';
+import openDB from './open-db';
 import splitFields from './split-fields';
 
 function propertyFields(row){
@@ -19,7 +19,7 @@ function propertyFields(row){
 }
 
 export default function getGeoJSONFromCategory(category, user, properties = null){
-	const db = relativePathDB("/data/geoguessr.db");
+	const db = openDB();
 	if(properties){
 		const query = db.prepare(`
 			SELECT id,

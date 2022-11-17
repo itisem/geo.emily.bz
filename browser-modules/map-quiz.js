@@ -47,6 +47,11 @@ export default class MapQuiz{
 		}
 	}
 
+	skipQuestion(){
+		this.questionOrder.push(this.questionOrder[0]);
+		this.nextQuestion();
+	}
+
 	nextQuestion(){
 		this.questionOrder.shift();
 	}

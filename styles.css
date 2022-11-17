@@ -25,6 +25,11 @@
   src: url("/fonts/PTSerif-700.ttf");
 }
 
+@font-face{
+	font-family: "TwemojiFlags";
+	src: url("https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2");
+}
+
 body{
 	background: var(--light1);
 	font-family: "PT Serif";

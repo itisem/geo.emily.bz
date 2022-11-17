@@ -107,6 +107,33 @@ const structureQueries = [
 	},
 	function addDefaultMap(db){
 		db.prepare(`ALTER TABLE quizzes ADD COLUMN defaultMap TEXT DEFAULT "gm" NOT NULL`);
+	},
+	function addUsers(db){
+		db.prepare(`CREATE TABLE IF NOT EXISTS quizAliases(
+				alias TEXT PRIMARY KEY NOT NULL,
+				id TEXT NOT NULL, 
+				user TEXT NOT NULL,
+				frontpageCategory TEXT
+			)
+		`).run();
+		db.prepare(`CREATE TABLE IF NOT EXISTS users(
+				id TEXT PRIMARY KEY NOT NULL,
+				displayName TEXT UNIQUE NOT NULL, 
+				password TEXT NOT NULL,
+				salt TEXT NOT NULL
+			)
+		`).run();
+		db.prepare(`CREATE TABLE IF NOT EXISTS sessions(
+				sessionKey TEXT PRIMARY KEY NOT NULL,
+				userId TEXT NOT NULL, 
+				expiry INTEGER NOT NULL
+			)
+		`).run();
+	},
+	function userFixes(db){
+		db.prepare(`ALTER TABLE users DROP COLUMN salt`).run();
+		db.prepare(`ALTER TABLE users ADD COLUMN permissions INTEGER DEFAULT 3 NOT NULL`).run();
+		db.prepare(`ALTER TABLE quizAliases ADD COLUMN frontpageTitle TEXT`).run();
 	}
 ]; // adding / removing columns should be done by a new query here to ensure database is versioned correctly
 

@@ -1,4 +1,5 @@
 import getQuiz from "/utils/db/get-quiz";
+import getOfficialQuiz from "/utils/db/get-official-quiz";
 import getGeoJSONFromCategory from "/utils/db/get-geojson-from-category";
 import getGeoJSONPolygon from "/utils/maps/get-geojson-polygon";
 import getViewStateFromBounds from "/utils/maps/get-viewstate-from-bounds";
@@ -6,7 +7,7 @@ import bbox from "@turf/bbox";
 import * as crypto from "crypto";
 
 import DeckGL from '@deck.gl/react';
-import MapTiles from "/components/map-tiles";
+import MapTiles from "/components/deck.gl/map-tiles";
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PostProcessEffect, MapView} from '@deck.gl/core';
 import {triangleBlur} from '@luma.gl/shadertools';
@@ -51,7 +52,7 @@ const correctnessStyles = {
 export default function MapQuizPage(props) {
 	if(props.error){
 		return (
-			<div class="container">
+			<div className="container">
 				<h1>Error: {props.errorMessage}</h1>
 				<div className="centered"><a href="/map-quiz">Return to quizzes</a></div>
 			</div>
@@ -65,25 +66,33 @@ export default function MapQuizPage(props) {
 	const [mapType, setMapType] = useState(props.defaultMap);
 	const [mapVisible, setMapVisible] = useState(true);
 	const [forceClick, setForceClick] = useState(true);
-	const [clickedWrong, setClickedWrong] = useState(false);
+	const [maxTries, setMaxTries] = useState(1);
+	const [currentTries, setCurrentTries] = useState(0);
+	const [hovering, setHovering] = useState(false);
 	const [questionCount, setQuestionCount] = useState(0); // forcing a rerender
 	const forceRerender = () => setQuestionCount(questionCount+1);
 
 	const checkAnswer = (key) => {
 		if(quiz.questions.length === 0) return;
 		if(key == "correct" || key == "wrong") return;
-		const isCorrect = quiz.checkAnswer(key, !clickedWrong);
+		const isCorrect = quiz.checkAnswer(key, currentTries < maxTries);
 		if(!isCorrect){
-			setClickedWrong(true);
+			setCurrentTries(currentTries + 1);
 		}
 		if(isCorrect || !forceClick){
-			setClickedWrong(false);
+			setCurrentTries(0);
 			quiz.nextQuestion();
 		}
 		forceRerender();
 		if(quiz.questions.length == 0){
 			setMapVisible(false);
 		}
+	}
+
+	const skipQuestion = () => {
+		setCurrentTries(0);
+		quiz.skipQuestion();
+		forceRerender();
 	}
 
 	const getGeoJSONLayers = () => {
@@ -136,11 +145,12 @@ export default function MapQuizPage(props) {
 		createGeoJSON("wrong", layers.wrong, correctnessStyles.wrong),
 		createGeoJSON("correct", layers.correct, correctnessStyles.correct),
 		createGeoJSON("unselected", layers.unselected, correctnessStyles.unselected),
-		createGeoJSON(layers.current[0] ? layers.current[0].key : "tmp", layers.current, clickedWrong ? correctnessStyles.force : correctnessStyles.unselected),
+		createGeoJSON(layers.current[0] ? layers.current[0].key : "tmp", layers.current, currentTries >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
 	]
 
 	const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
 	const changeForceClick = () => setForceClick(document.getElementById("force-click").checked);
+	const changeTries = () => setMaxTries(document.getElementById("max-tries").value);
 
 	useEffect(() => {
 		quiz.randomiseQuestions(); // moved here to avoid hydration errors
@@ -157,25 +167,42 @@ export default function MapQuizPage(props) {
 	return (
 		<>
 			<Head><title>{props.title} map quiz</title></Head>
-			<div
-				id="question"
+			<progress 
+				max={totalQuestions}
+				value={totalQuestions - quiz.questionOrder.length}
 				style={{
+					zIndex: "98",
 					position: "fixed",
 					top: "10px",
 					left: "50%",
 					transform: "translateX(-50%)",
+					width: "min(25%, 150px)",
+					accentColor: "var(--dark1)"
+				}}
+			/>
+			<div
+				id="top-bar"
+				style={{
+					position: "fixed",
+					top: "25px",
+					left: "50%",
+					transform: "translateX(-50%)",
 					zIndex: "98",
+					padding: 0,
+					margin: 0,
 					paddingTop: "10px",
 					background: quiz.isImageQuestion ? "none" : "var(--light1)",
 					fontFamily: "Manrope",
 					visibility: mapVisible ? "visible" : "hidden",
 					fontSize: "1.5em",
-					padding:0,
-					margin: 0,
 					maxWidth: "33vw"
 				}}
-				dangerouslySetInnerHTML={{__html: quiz.currentQuestionHTML}}
 			>
+				<div id="skip-button" style={{textAlign: "center"}}>
+					<button id="skip" onClick={skipQuestion}>Skip</button>
+				</div>
+				<div id="question" dangerouslySetInnerHTML={{__html: quiz.currentQuestionHTML}}>
+				</div>
 			</div>
 
 			<div
@@ -200,7 +227,10 @@ export default function MapQuizPage(props) {
 						<b>Google Maps</b>: <SelectorButtonGroup buttons={gmButtons} name="select-map" />
 						<b>OSM</b>: <SelectorButtonGroup buttons={osmButtons} name="select-map" /><br/>
 						<input type="checkbox" id="force-click" name="force-click" onChange={changeForceClick} checked={forceClick} />
-						<label htmlFor="force-click">Force click on correct answer?</label>
+						<label htmlFor="force-click">Force click on correct answer?</label><br />
+						<label htmlFor="max-tries">Maximum amount of tries</label>
+						<input type="number" id="max-tries" name="max-tries" value={maxTries} size="3" min="0" onChange={changeTries} /><br />
+						<a href="https://discord.gg/td7bN9HKhX">feature suggestions discord</a>
 				</details>
 			</div>
 
@@ -264,6 +294,8 @@ export default function MapQuizPage(props) {
 					layers={[MapTiles(mapType), ...geoJSONLayers]}
 					effects={mapVisible? [] : [new PostProcessEffect(triangleBlur,{radius: 5})]}
 					repeat={true}
+					onHover={({object}) => setHovering(Boolean(object))}
+					getCursor={({isDragging}) => isDragging ? "grabbing" : (hovering ? "pointer" : "default")}
 				/>
 			</div>
 		</>
@@ -283,7 +315,7 @@ export function getStaticProps({params}){
 				quizDetails = getQuiz(params.id[0].slice(1), params.id[1]);
 		}
 		else{
-				quizDetails = getQuiz("import", params.id[0]+"/"+params.id[1]);
+				quizDetails = getOfficialQuiz(params.id.join("/"));
 		}
 		if(quizDetails === undefined){
 				return {
@@ -319,8 +351,7 @@ export function getStaticProps({params}){
 						defaultMap: quizDetails.defaultMap,
 						displayValues: quizDetails.displayValues,
 						bbox: jsonBbox,
-						error: false,
-						uuid: crypto.randomUUID()
+						error: false
 				}
 		};
 }
