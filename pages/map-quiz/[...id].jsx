@@ -71,8 +71,7 @@ export default function MapQuizPage(props) {
 	const [maxTries, setMaxTries] = useState(1);
 	const [hovering, setHovering] = useState("");
 	const [roundWrong, setRoundWrong] = useState([]);
-	const [questionCount, setQuestionCount] = useState(0); // forcing a rerender
-	const forceRerender = () => setQuestionCount(questionCount+1);
+	const [currentQuestion, setCurrentQuestion] = useState(quiz.currentQuestionHTML);
 
 	const checkAnswer = (layerKey, jsonKey) => {
 		if(quiz.questions.length === 0) return;
@@ -83,19 +82,20 @@ export default function MapQuizPage(props) {
 		}
 		if(isCorrect || !forceClick){
 			setRoundWrong([]);
-			quiz.nextQuestion();
+			setCurrentQuestion(quiz.nextQuestion());
 		}
-		forceRerender();
 		if(quiz.questions.length == 0){
 			setMapVisible(false);
 		}
 	}
 
+	useEffect( () => refreshQuestions(), [roundWrong, currentQuestion]);
+
 	const skipQuestion = () => {
-		if(!roundWrong) quiz.skipQuestion();
-		else quiz.nextQuestion();
+		if(!roundWrong) setCurrentQuestion(quiz.skipQuestion());
+		else setCurrentQuestion(quiz.nextQuestion());
+		refreshQuestions();
 		setRoundWrong([]);
-		forceRerender();
 	}
 
 	const getGeoJSONLayers = () => {
@@ -137,7 +137,13 @@ export default function MapQuizPage(props) {
 				}
 			}
 		}
-		return layers;
+		return [
+			createGeoJSON("wrong", layers.wrong, correctnessStyles.wrong),
+			createGeoJSON("correct", layers.correct, correctnessStyles.correct),
+			createGeoJSON("unselected", layers.unselected, correctnessStyles.unselected),
+			createGeoJSON("roundWrong", layers.roundWrong, correctnessStyles.roundWrong),
+			createGeoJSON("current", layers.current, roundWrong.length >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
+		];
 	}
 
 	const createGeoJSON = (id, jsons, colour, pickable = true) => {return new GeoJsonLayer({
@@ -152,16 +158,12 @@ export default function MapQuizPage(props) {
 		onClick: (e) => checkAnswer(id, e.object.properties.__key)
 	})};
 
-	const layers = getGeoJSONLayers();
+	const [questionLayers, setQuestionLayers] = useState(getGeoJSONLayers());
 
-	const geoJSONLayers = [
-		createGeoJSON("wrong", layers.wrong, correctnessStyles.wrong),
-		createGeoJSON("correct", layers.correct, correctnessStyles.correct),
-		createGeoJSON("unselected", layers.unselected, correctnessStyles.unselected),
-		createGeoJSON("roundWrong", layers.roundWrong, correctnessStyles.roundWrong),
-		createGeoJSON(layers.current[0] ? layers.current[0].key : "tmp", layers.current, roundWrong.length >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
-		createGeoJSON("hovering", layers.hovering, correctnessStyles.hovering, false),
-	]
+	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
+
+
+	const hoveringLayer = createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false);
 
 	const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
 	const changeForceClick = () => setForceClick(document.getElementById("force-click").checked);
@@ -169,8 +171,8 @@ export default function MapQuizPage(props) {
 
 	useEffect(() => {
 		quiz.randomiseQuestions(); // moved here to avoid hydration errors
+		setCurrentQuestion(quiz.currentQuestionHTML);
 		setViewState(getViewStateFromBounds(props.bbox, window.innerWidth, window.innerHeight));
-		setTimeout(forceRerender, 0); // i have no idea why this gets rid of the race condition but it does lol
 		const mapSelectors = document.querySelectorAll('input[name="select-map"]');
 		for(let mapSelector of mapSelectors){
 			mapSelector.onchange = () => {
@@ -214,7 +216,7 @@ export default function MapQuizPage(props) {
 					maxWidth: "33vw"
 				}}
 			>
-				<div id="question" dangerouslySetInnerHTML={{__html: quiz.currentQuestionHTML}}></div>
+				<div id="question" dangerouslySetInnerHTML={{__html: currentQuestion}}></div>
 				<div id="skip-button" style={{textAlign: "center"}}>
 					<button id="skip" onClick={skipQuestion}>Skip</button>
 				</div>
@@ -291,6 +293,8 @@ export default function MapQuizPage(props) {
 							setMapVisible(true);
 							quiz.randomiseQuestions();
 						}
+						setRoundWrong([]);
+						refreshQuestions();
 					}}
 					style = {{
 						fontSize: "1em"
@@ -306,7 +310,7 @@ export default function MapQuizPage(props) {
 					controller={mapVisible}
 					initialViewState={viewState}
 					views={new MapView({repeat:true})}
-					layers={[MapTiles(mapType), ...geoJSONLayers]}
+					layers={[MapTiles(mapType), ...questionLayers, hoveringLayer]}
 					effects={mapVisible? [] : [new PostProcessEffect(triangleBlur,{radius: 5})]}
 					repeat={true}
 					onHover={({object}) => {
