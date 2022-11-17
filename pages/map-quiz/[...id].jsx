@@ -92,8 +92,9 @@ export default function MapQuizPage(props) {
 	}
 
 	const skipQuestion = () => {
+		if(!roundWrong) quiz.skipQuestion();
+		else quiz.nextQuestion();
 		setRoundWrong([]);
-		quiz.skipQuestion();
 		forceRerender();
 	}
 
@@ -106,7 +107,7 @@ export default function MapQuizPage(props) {
 			"roundWrong": [],
 			"hovering": []
 		};
-		if(!quiz.correctness){
+		if(!quiz.correctness){ // ensures that un-initialised quizzes work
 			props.geoJSONs.map(x => layers.current.push(x));
 			return layers;
 		}
@@ -159,7 +160,7 @@ export default function MapQuizPage(props) {
 		createGeoJSON("unselected", layers.unselected, correctnessStyles.unselected),
 		createGeoJSON("roundWrong", layers.roundWrong, correctnessStyles.roundWrong),
 		createGeoJSON(layers.current[0] ? layers.current[0].key : "tmp", layers.current, roundWrong.length >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
-		createGeoJSON("hovering", layers.hovering, correctnessStyles.hovering),
+		createGeoJSON("hovering", layers.hovering, correctnessStyles.hovering, false),
 	]
 
 	const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
@@ -187,7 +188,7 @@ export default function MapQuizPage(props) {
 				style={{
 					zIndex: "98",
 					position: "fixed",
-					top: "10px",
+					bottom: "10px",
 					left: "50%",
 					transform: "translateX(-50%)",
 					width: "min(25%, 150px)",
@@ -198,13 +199,14 @@ export default function MapQuizPage(props) {
 				id="top-bar"
 				style={{
 					position: "fixed",
-					top: "25px",
+					top: "10px",
 					left: "50%",
 					transform: "translateX(-50%)",
 					zIndex: "98",
 					padding: 0,
 					margin: 0,
-					paddingTop: "10px",
+					paddingTop: "5px",
+					paddingBottom: "5px",
 					background: quiz.isImageQuestion ? "none" : "var(--light1)",
 					fontFamily: "Manrope",
 					visibility: mapVisible ? "visible" : "hidden",
@@ -212,10 +214,9 @@ export default function MapQuizPage(props) {
 					maxWidth: "33vw"
 				}}
 			>
+				<div id="question" dangerouslySetInnerHTML={{__html: quiz.currentQuestionHTML}}></div>
 				<div id="skip-button" style={{textAlign: "center"}}>
 					<button id="skip" onClick={skipQuestion}>Skip</button>
-				</div>
-				<div id="question" dangerouslySetInnerHTML={{__html: quiz.currentQuestionHTML}}>
 				</div>
 			</div>
 
