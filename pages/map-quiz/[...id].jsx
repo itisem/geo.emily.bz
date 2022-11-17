@@ -295,6 +295,7 @@ export default function MapQuizPage(props) {
 						}
 						setRoundWrong([]);
 						refreshQuestions();
+						setCurrentQuestion(quiz.currentQuestionHTML);
 					}}
 					style = {{
 						fontSize: "1em"
