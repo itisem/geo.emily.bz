@@ -54,6 +54,7 @@ export default class MapQuiz{
 
 	nextQuestion(){
 		this.questionOrder.shift();
+		return this.currentQuestionHTML;
 	}
 
 	checkAnswer(answer, setCorrectness = true){
