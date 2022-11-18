@@ -12,7 +12,7 @@ import {GeoJsonLayer} from '@deck.gl/layers';
 import {PostProcessEffect, MapView} from '@deck.gl/core';
 import {triangleBlur} from '@luma.gl/shadertools';
 
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import Head from "next/head";
 
 import SelectorButtonGroup from "/components/selector-button-group";
@@ -68,12 +68,18 @@ export default function MapQuizPage(props) {
 	const [mapType, setMapType] = useState(props.defaultMap);
 	const [mapVisible, setMapVisible] = useState(true);
 	const [forceClick, setForceClick] = useState(true);
+	const [displayBorders, setDisplayBorders] = useState(true);
 	const [maxTries, setMaxTries] = useState(1);
 	const [hovering, setHovering] = useState("");
 	const [roundWrong, setRoundWrong] = useState([]);
 	const [currentQuestion, setCurrentQuestion] = useState(quiz.currentQuestionHTML);
 
-	const checkAnswer = (layerKey, jsonKey) => {
+	const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
+	const changeForceClick = (e) => setForceClick(e.target.checked);
+	const changeTries = (e) => setMaxTries(e.target.value);
+	const changeDisplayBorders = (e) => setDisplayBorders(e.target.checked);
+
+	const checkAnswer = useCallback((layerKey, jsonKey) => {
 		if(quiz.questions.length === 0) return;
 		if(layerKey == "correct" || layerKey == "wrong") return;
 		const isCorrect = quiz.checkAnswer(jsonKey, roundWrong.length < maxTries);
@@ -87,9 +93,9 @@ export default function MapQuizPage(props) {
 		if(quiz.questions.length == 0){
 			setMapVisible(false);
 		}
-	}
+	}, [forceClick, currentQuestion]);
 
-	useEffect( () => refreshQuestions(), [roundWrong, currentQuestion]);
+	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
 
 	const skipQuestion = () => {
 		if(!roundWrong) setCurrentQuestion(quiz.skipQuestion());
@@ -150,7 +156,7 @@ export default function MapQuizPage(props) {
 		id: id,
 		data: jsons.map(geoJSON => geoJSON.shape),
 		getFillColor: [...colour, 100],
-		stroked: true,
+		stroked: displayBorders,
 		getLineColor: [...colour, 255],
 		getLineWidth: 2,
 		lineWidthUnits: "pixels",
@@ -163,11 +169,7 @@ export default function MapQuizPage(props) {
 	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
 
 
-	const hoveringLayer = createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false);
-
-	const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
-	const changeForceClick = () => setForceClick(document.getElementById("force-click").checked);
-	const changeTries = () => setMaxTries(document.getElementById("max-tries").value);
+	const hoveringLayer = displayBorders ? createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false) : [];
 
 	useEffect(() => {
 		quiz.randomiseQuestions(); // moved here to avoid hydration errors
@@ -244,10 +246,11 @@ export default function MapQuizPage(props) {
 						<b>Google Maps</b>: <SelectorButtonGroup buttons={gmButtons} name="select-map" />
 						<b>OSM</b>: <SelectorButtonGroup buttons={osmButtons} name="select-map" /><br/>
 						<input type="checkbox" id="force-click" name="force-click" onChange={changeForceClick} checked={forceClick} />
-						<label htmlFor="force-click">Force click on correct answer?</label><br />
-						<label htmlFor="max-tries">Maximum amount of tries</label>
+						<label htmlFor="force-click">Force click on correct answer</label>
+						<input type="checkbox" id="display-borders" name="display-borders" onChange={changeDisplayBorders} checked={displayBorders} />
+						<label htmlFor="display-borders">Show borders</label><br />
+						<label htmlFor="max-tries">Maximum tries: </label>
 						<input type="number" id="max-tries" name="max-tries" value={maxTries} size="3" min="0" onChange={changeTries} /><br />
-						<a href="https://discord.gg/td7bN9HKhX">feature suggestions discord</a>
 				</details>
 			</div>
 

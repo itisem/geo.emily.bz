@@ -12,7 +12,7 @@ function CountryContainer({quizzes, category}){
 		<section key={category}>
 			<h2 style={{textAlign: "center", fontFamily: "TwemojiFlags, Manrope"}}>{emoji(category)} {category}</h2>
 			<ul>
-				{quizzes.map(quiz => <li key={quiz.id}><a href={"/map-quiz/"+quiz.alias}>{quiz.frontpageTitle}</a></li>)}
+				{quizzes.map(quiz => <li key={quiz.alias}><a href={"/map-quiz/"+quiz.alias}>{quiz.frontpageTitle}</a></li>)}
 			</ul>
 		</section>
 	);
