@@ -95,8 +95,6 @@ export default function MapQuizPage(props) {
 		}
 	}, [forceClick, currentQuestion, roundWrong]);
 
-	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
-
 	const skipQuestion = () => {
 		if(!roundWrong) setCurrentQuestion(quiz.skipQuestion());
 		else setCurrentQuestion(quiz.nextQuestion());
@@ -165,11 +163,13 @@ export default function MapQuizPage(props) {
 	})};
 
 	const [questionLayers, setQuestionLayers] = useState(getGeoJSONLayers());
+	const [hoveringLayer, setHoveringLayer] = useState(null);
 
 	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
+	const refreshHovering = () => displayBorders ? setHoveringLayer(createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false)) : setHovering(null);
 
-
-	const hoveringLayer = displayBorders ? createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false) : [];
+	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
+	useEffect(() => refreshHovering(), [hovering]);
 
 	useEffect(() => {
 		quiz.randomiseQuestions(); // moved here to avoid hydration errors
@@ -319,7 +319,7 @@ export default function MapQuizPage(props) {
 					repeat={true}
 					onHover={({object}) => {
 						if(!object){if(hovering) setHovering("");}
-						else{if(object.properties.__key !== hovering)setHovering(object.properties.__key);}
+						else{if(object.properties.__key !== hovering) setHovering(object.properties.__key);}
 					}}
 					getCursor={({isDragging}) => isDragging ? "grabbing" : (hovering ? "pointer" : "default")}
 				/>
@@ -344,12 +344,12 @@ export function getStaticProps({params}){
 				quizDetails = getOfficialQuiz(params.id.join("/"));
 		}
 		if(quizDetails === undefined){
-				return {
-						props: {
-								error: true,
-								errorMessage: "Quiz not found"
-						}
-				};
+			return {
+					props: {
+							error: true,
+							errorMessage: "Quiz not found"
+					}
+			};
 		}
 
 		let geoJSONs = getGeoJSONFromCategory(quizDetails.categoryId, quizDetails.categoryUser, quizDetails.displayValues);
@@ -372,7 +372,6 @@ export function getStaticProps({params}){
 			return [];
 		});
 		const jsonBbox = bbox({type: "MultiPolygon", coordinates: coordsOnly});
-		console.log(quizDetails.title);
 		return {
 				props: {
 						geoJSONs: geoJSONs,
