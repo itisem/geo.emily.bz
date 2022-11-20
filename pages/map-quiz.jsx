@@ -3,8 +3,6 @@ import * as appRoot from "app-root-path";
 import {flag} from "country-emoji";
 import Head from "next/head";
 
-const redoTitle = (title, country) => {const r = title.replace(new RegExp(`^${country} `, "i"), ""); return r[0].toUpperCase()+r.slice(1);};
-
 const emoji = country => {if(country=="Eswatini")return "🇸🇿"; return flag(country);}
 
 function CountryContainer({quizzes, category}){
@@ -42,24 +40,24 @@ export default function MapQuiz({quizzes}){
 
 
 export function getStaticProps(){
-		const db = new Database(`${appRoot}/data/geoguessr.db`);
-		const quizzes = db.prepare(`
-			SELECT alias, frontpageTitle, frontpageCategory
-			FROM quizAliases
-			WHERE frontpageCategory IS NOT NULL
-			ORDER BY frontpageCategory ASC
-		`).all();
-		let quizzesByCategory = {};
-		for(let quiz of quizzes){
-			const category = quiz.frontpageCategory;
-			if(!quizzesByCategory[category]){
-				quizzesByCategory[category] = [];
-			}
-			quizzesByCategory[category].push(quiz);
+	const db = new Database(`${appRoot}/data/geoguessr.db`);
+	const quizzes = db.prepare(`
+		SELECT alias, frontpageTitle, frontpageCategory
+		FROM quizAliases
+		WHERE frontpageCategory IS NOT NULL
+		ORDER BY frontpageCategory ASC
+	`).all();
+	let quizzesByCategory = {};
+	for(let quiz of quizzes){
+		const category = quiz.frontpageCategory;
+		if(!quizzesByCategory[category]){
+			quizzesByCategory[category] = [];
 		}
-		return {
-			props: {
-				quizzes: quizzesByCategory
-			}
+		quizzesByCategory[category].push(quiz);
+	}
+	return {
+		props: {
+			quizzes: quizzesByCategory
 		}
+	}
 }

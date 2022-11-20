@@ -1,5 +1,5 @@
 import SelectorButton from "./selector-button";
-import styles from './selector-button-group.module.css';
+import styles from "./selector-button-group.module.css";
 
 const keyAndId = (x, props) => x.id ? x.id : props.name + "-" + x.value.replace(" ", "-");
 

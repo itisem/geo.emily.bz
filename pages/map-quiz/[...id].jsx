@@ -93,7 +93,7 @@ export default function MapQuizPage(props) {
 		if(quiz.questions.length == 0){
 			setMapVisible(false);
 		}
-	}, [forceClick, currentQuestion]);
+	}, [forceClick, currentQuestion, roundWrong]);
 
 	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
 
@@ -372,6 +372,7 @@ export function getStaticProps({params}){
 			return [];
 		});
 		const jsonBbox = bbox({type: "MultiPolygon", coordinates: coordsOnly});
+		console.log(quizDetails.title);
 		return {
 				props: {
 						geoJSONs: geoJSONs,
