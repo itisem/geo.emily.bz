@@ -1,0 +1,26 @@
+#answer{
+	text-align: center;
+}
+
+#answer.correct{
+	color: green;
+}
+
+#answer.incorrect{
+	color: red;
+}
+
+#current-question{
+	margin: 10px 0 10px 0;
+	font-size: 40px;
+	font-weight: bold;
+}
+
+#faq{
+	max-width: 800px;
+	margin: 0 auto;
+}
+#audio-button{
+	margin: auto 10px;
+	height: 45px;
+}

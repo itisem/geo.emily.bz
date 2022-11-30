@@ -9,6 +9,7 @@ export default function SelectorButtonGroup(props){
 		key={keyAndId(x, props)}
 		id={keyAndId(x, props)}
 		value={x.value}
+		buttonType={props.buttonType || "radio"}
 		name={props.name}
 		text={x.text}
 		defaultChecked={x.defaultChecked}
@@ -19,4 +20,4 @@ export default function SelectorButtonGroup(props){
 			{actionButtons}
 		</ul>
 	);
-}
+}ß

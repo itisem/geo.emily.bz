@@ -1,1 +1,0 @@
-This repository contains the code for the [geo.emily.bz](https://geo.emily.bz) website.

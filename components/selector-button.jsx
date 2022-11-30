@@ -1,7 +1,9 @@
+import styles from "./selector-button.module.css";
 export default function SelectorButton(props){
+	const buttonType = props.buttonType || "radio";
 	return (
-		<li>
-			<input type="radio" value={props.value} id={props.id} name={props.name} defaultChecked={props.defaultChecked}  />
+		<li className={styles.button}>
+			<input type={buttonType} value={props.value} id={props.id} name={props.name} defaultChecked={props.defaultChecked}  />
 			<label className="button-label" htmlFor={props.id}>{props.text}</label>
 		</li>
 	);

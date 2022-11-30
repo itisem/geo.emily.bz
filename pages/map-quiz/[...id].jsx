@@ -51,7 +51,7 @@ const correctnessStyles = {
 	hovering: [255, 255, 255]
 };
 
-export default function MapQuizPage(props) {
+export default function MapQuizPage(props){
 	if(props.error){
 		return (
 			<div className="container">
@@ -93,13 +93,24 @@ export default function MapQuizPage(props) {
 		if(quiz.questions.length == 0){
 			setMapVisible(false);
 		}
-	}, [forceClick, currentQuestion, roundWrong]);
+	}, [forceClick, currentQuestion, roundWrong])
 
 	const skipQuestion = () => {
-		if(!roundWrong) setCurrentQuestion(quiz.skipQuestion());
+		if(roundWrong.length == 0) setCurrentQuestion(quiz.skipQuestion());
 		else setCurrentQuestion(quiz.nextQuestion());
 		refreshQuestions();
 		setRoundWrong([]);
+	}
+
+
+	const restartQuiz = () => {
+		if(!mapVisible){
+			setMapVisible(true);
+		}
+		setRoundWrong([]);
+		quiz.randomiseQuestions();
+		refreshQuestions();
+		setCurrentQuestion(quiz.currentQuestionHTML);
 	}
 
 	const getGeoJSONLayers = () => {
@@ -166,7 +177,7 @@ export default function MapQuizPage(props) {
 	const [hoveringLayer, setHoveringLayer] = useState(null);
 
 	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
-	const refreshHovering = () => displayBorders ? setHoveringLayer(createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false)) : setHovering(null);
+	const refreshHovering = () => displayBorders && mapVisible ? setHoveringLayer(createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false)) : setHovering(null);
 
 	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
 	useEffect(() => refreshHovering(), [hovering]);
@@ -215,12 +226,14 @@ export default function MapQuizPage(props) {
 					fontFamily: "Manrope",
 					visibility: mapVisible ? "visible" : "hidden",
 					fontSize: "1.5em",
-					maxWidth: "33vw"
+					maxWidth: "33vw",
+					textAlign: "center"
 				}}
 			>
 				<div id="question" dangerouslySetInnerHTML={{__html: currentQuestion}}></div>
 				<div id="skip-button" style={{textAlign: "center"}}>
 					<button id="skip" onClick={skipQuestion}>Skip</button>
+					<button id="restart" onClick={restartQuiz}>Restart</button>
 				</div>
 			</div>
 
@@ -291,15 +304,7 @@ export default function MapQuizPage(props) {
 				You got {quiz.totalCorrect} out of {totalQuestions} questions correct. <br/>
 				<button
 					id="restart-button"
-					onClick = {() => {
-						if(!mapVisible){
-							setMapVisible(true);
-							quiz.randomiseQuestions();
-						}
-						setRoundWrong([]);
-						refreshQuestions();
-						setCurrentQuestion(quiz.currentQuestionHTML);
-					}}
+					onClick = {restartQuiz}
 					style = {{
 						fontSize: "1em"
 					}}
@@ -328,14 +333,7 @@ export default function MapQuizPage(props) {
 	);
 }
 
-export async function getStaticPaths(){
-		return {
-				paths: [],
-				fallback: 'blocking'
-		};
-}
-
-export function getStaticProps({params}){
+export function getServerSideProps({params}){
 		let quizDetails;
 		if(params.id[0][0] == "@"){ // user-made quizzes
 				quizDetails = getQuiz(params.id[0].slice(1), params.id[1]);

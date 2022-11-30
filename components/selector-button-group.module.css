@@ -8,21 +8,3 @@
 	float: left;
 	margin: 0 10px 0 0;
 }
-.button-group input[type=radio]{
-	display: none;
-}
-.button-group input[type=radio] + label{
-	background: var(--light2);
-	border: 1px solid var(--dark2);
-	border-radius: 5px;
-	padding: 5px;
-	cursor: pointer;
-	font-size: 14px;
-}
-.button-group input[type=radio]:checked + label{
-	background: var(--dark2);
-	color: var(--light2);
-}
-.button-group input[type=radio]:hover + label{
-	background: var(--dark1);
-}

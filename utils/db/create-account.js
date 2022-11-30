@@ -1,4 +1,4 @@
-import openDB from './open-db.js';
+import openDB from './open-db';
 import * as crypto from "crypto";
 import * as bcrypt from "bcrypt";
 
