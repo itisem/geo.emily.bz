@@ -1,22 +1,30 @@
-import openDB from './open-db';
+import openDB from "./open-db";
+import validateUsername from "./validate-username";
 import * as crypto from "crypto";
 import * as bcrypt from "bcrypt";
 
-export default function login(username, password){
-	const sessionDuration = 60*60*24;
+export default function login(username, password, settings = {}){
+	const sessionDuration = +process.env.SESSION_DURATION || 1000*60*60*24;
 	const db = openDB();
-	const usernameCheck = /^[a-zA-Z][a-zA-Z0-9\-]{1,18}[a-zA-Z]$/;
-	if(!username.match(usernameCheck)) return Promise.reject({error: true, message: "User does not exist"});
+	if(!validateUsername(username, settings)) return Promise.reject("INVALID_USERNAME");
 	const userData = db.prepare("SELECT * FROM users WHERE LOWER(displayName) = ?").get([username.toLowerCase()]);
-	if(!userData) return Promise.reject({error: true, message: "User does not exist"});
+	if(!userData) return Promise.reject("USERNAME_DOES_NOT_EXIST");
 	return bcrypt.compare(password, userData.password).then(result => {
-		if(!result) throw {error: true, message: "Incorrect password"};
-		const sessionKey = crypto.randomUUID({disableEntropyCache: true});
-		db.prepare("INSERT INTO sessions(sessionKey, userId, expiry) VALUES (:key, :id, :expiry)").run({
-			key: sessionKey,
-			id: userData.id,
-			expiry: Date.now() + sessionDuration
+		if(!result) return Promise.reject("INCORRECT_PASSWORD");
+		const sessionId = crypto.randomUUID({disableEntropyCache: true});
+		const expiry = Date.now() + sessionDuration;
+		db.prepare("INSERT INTO sessions(sessionId, userId, expiry) VALUES (:sessionId, :userId, :expiry)").run({
+			sessionId: sessionId,
+			userId: userData.id,
+			expiry: expiry
 		});
-		return {error: false, message: sessionKey};
+		return {
+			sessionId: sessionId, 
+			user: {
+				id: userData.id,
+				displayName: userData.displayName
+			},
+			expiry: expiry
+		};
 	});
 }

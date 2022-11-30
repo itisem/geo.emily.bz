@@ -40,7 +40,7 @@ export default function MapQuiz({quizzes}){
 
 
 export function getStaticProps(){
-	const db = new Database(`${appRoot}/data/geoguessr.db`);
+	const db = new Database(`${appRoot}/data/data.db`);
 	const quizzes = db.prepare(`
 		SELECT alias, frontpageTitle, frontpageCategory
 		FROM quizAliases
