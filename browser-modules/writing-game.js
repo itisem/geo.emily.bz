@@ -20,7 +20,7 @@ export default class WritingGame{
 	}
 
 	transformEnglish(text){
-		return text.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]*/g, "");
+		return text.normalize("NFD").replace(/[\u0300-\u036f]/gu, "").toLowerCase().replace(/[^a-z0-9]*/g, "");
 	}
 
 	async setLanguage(language){

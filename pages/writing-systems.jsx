@@ -102,7 +102,7 @@ export default function WritingSystems( {languages}){
 }
 
 export function getStaticProps(){
-	const db = new Database(`${appRoot}/data/geoguessr.db`);
+	const db = new Database(`${appRoot}/data/data.db`);
 	const languages = db.prepare(`
 		SELECT * FROM languages
 	`).all();

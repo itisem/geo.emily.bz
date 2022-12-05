@@ -177,7 +177,7 @@ export default function MapQuizPage(props){
 	const [hoveringLayer, setHoveringLayer] = useState(null);
 
 	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
-	const refreshHovering = () => displayBorders && mapVisible ? setHoveringLayer(createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false)) : setHovering(null);
+	const refreshHovering = () => displayBorders && mapVisible ? setHoveringLayer(createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false)) : setHoveringLayer([]);
 
 	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
 	useEffect(() => refreshHovering(), [hovering]);
