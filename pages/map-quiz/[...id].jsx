@@ -74,7 +74,7 @@ export default function MapQuizPage(props){
 	const [roundWrong, setRoundWrong] = useState([]);
 	const [currentQuestion, setCurrentQuestion] = useState(quiz.currentQuestionHTML);
 
-	const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
+	//const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
 	const changeForceClick = (e) => setForceClick(e.target.checked);
 	const changeTries = (e) => setMaxTries(e.target.value);
 	const changeDisplayBorders = (e) => setDisplayBorders(e.target.checked);
@@ -186,12 +186,6 @@ export default function MapQuizPage(props){
 		quiz.randomiseQuestions(); // moved here to avoid hydration errors
 		setCurrentQuestion(quiz.currentQuestionHTML);
 		setViewState(getViewStateFromBounds(props.bbox, window.innerWidth, window.innerHeight));
-		const mapSelectors = document.querySelectorAll('input[name="select-map"]');
-		for(let mapSelector of mapSelectors){
-			mapSelector.onchange = () => {
-				setMapType(getSelected("select-map"));
-			}
-		}
 	}, []);
 
 	return (
@@ -256,8 +250,8 @@ export default function MapQuizPage(props){
 				<details> 
 					<summary>⚙️Settings</summary>
 					Select map: 
-						<b>Google Maps</b>: <SelectorButtonGroup buttons={gmButtons} name="select-map" />
-						<b>OSM</b>: <SelectorButtonGroup buttons={osmButtons} name="select-map" /><br/>
+						<b>Google Maps</b>: <SelectorButtonGroup buttons={gmButtons} onChange={e => setMapType(e.target.value)} name="select-map" />
+						<b>OSM</b>: <SelectorButtonGroup buttons={osmButtons} onChange={e => setMapType(e.target.value)} name="select-map" /><br/>
 						<input type="checkbox" id="force-click" name="force-click" onChange={changeForceClick} checked={forceClick} />
 						<label htmlFor="force-click">Force click on correct answer</label>
 						<input type="checkbox" id="display-borders" name="display-borders" onChange={changeDisplayBorders} checked={displayBorders} />

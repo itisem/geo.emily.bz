@@ -4,21 +4,21 @@ import {useEffect, useState, useCallback} from 'react';
 import LocationFixer from '/browser-modules/location-fixer';
 
 export default function PanoTools(){
-
 	let [errorMessage, setErrorMessage] = useState("");
 	let [progress, setProgress] = useState({current: 0, max: 1});
 	let [outputJson, setOutputJson] = useState("{}");
 	let [fileName, setFileName] = useState("map");
 	let [display, setDisplay] = useState("none");
+	let [action, setAction] = useState("add");
 	let [errorCoords, setErrorCoords] = useState([]);
 
 	const pushErrorCoords = useCallback( value => setErrorCoords(errorCoords.concat(value)));
 
-	const displayError = useCallback( (coords, message) => {
+	const displayError = useCallback((coords, message) => {
 		setErrorMessage(errorMessage + `failed to convert <b>${coords}</b> -- ${message}<br/>`);
 	});
 
-	const addCoordinateChunk = useCallback( async (chunk, l) => {
+	const addCoordinateChunk = useCallback(async (chunk, l) => {
 		let promises = [];
 		for(let i = 0; i < chunk.length; i++){
 			promises.push(l.addFixedCoordinates(chunk[i]));
@@ -36,7 +36,7 @@ export default function PanoTools(){
 		);
 	});
 
-	const convertCoords = useCallback( async (l, segments, segmentSize, coords) => {
+	const convertCoords = useCallback(async (l, segments, segmentSize, coords) => {
 		for(let i = 0; i < segments; i++){
 			await addCoordinateChunk(coords.slice(i * segmentSize, (i + 1) * segmentSize), l);
 			let locCount = Math.min((i+1) * segmentSize, coords.length);
@@ -44,64 +44,51 @@ export default function PanoTools(){
 		}
 		setDisplay("block");
 		setOutputJson(l.export());
-		});
+	});
 
-
-	useEffect(
-		() => {
-			const uploadButton = document.querySelector(".file-upload");
-			uploadButton.onchange = () => {
-				if(uploadButton.value != uploadButton.defaultValue){
-					setDisplay("none");
-					setErrorMessage("");
-					setProgress({current: 0, max: 1});
-					setOutputJson("{}");
-					const fileUpload = document.querySelector("#pano-entry input[type=file]");
-					let file = fileUpload.files[0];
-					if(file){
-						setFileName(file.name.replace(".json", ""));
-						let reader = new FileReader();
-						reader.readAsText(file, "UTF-8");
-						reader.onload = event => {
-							const contents = event.target.result;
-							const type = document.querySelector('input[name="pano-action"]:checked').value;
-							if(!type){
-								displayError("please select an action");
-							}
-							let l = new LocationFixer(process.env.NEXT_PUBLIC_GOOGLE_API_KEY, type);
-							let coords = [];
-							let isParsed = false;
-							try{
-								let parsedJSON = JSON.parse(contents);
-								coords = parsedJSON.customCoordinates;
-								isParsed = true;
-							}
-							catch{
-								isParsed = false;
-							}
-							if(!isParsed){
-								const lines = contents.split(/\r?\n/);
-								for(let i = 0; i < lines.length; i++){
-									try{
-										coords.push(l.getCoordinatesFromURL(lines[i]));
-									}
-									catch(e){
-										displayError(lines[i], e.message);
-									}
-								}
-							}
-							const segmentSize = 500;
-							const segments = Math.ceil(coords.length / segmentSize);
-							setErrorCoords([]);
-							setProgress({current: 0, max: coords.length});
-							convertCoords(l, segments, segmentSize, coords);
-							fileUpload.value = fileUpload.defaultValue;
-						}
+	const fixPano = e => {
+		if(e.target.value === e.target.defaultValue) return; // upload button was cleared
+		setDisplay("none");
+		setErrorMessage("");
+		setProgress({current: 0, max: 1});
+		setOutputJson("{}");
+		const file = e.target.files[0];
+		if(!file) return;
+		setFileName(file.name.slice(0, -5));
+		let reader = new FileReader();
+		reader.readAsText(file, "UTF-8");
+		reader.onload = event => {
+			const contents = event.target.result;
+			let l = new LocationFixer(process.env.NEXT_PUBLIC_GOOGLE_API_KEY, action);
+			let coords = [];
+			let isParsed = false;
+			try{
+				let parsedJSON = JSON.parse(contents);
+				coords = parsedJSON.customCoordinates;
+				isParsed = true;
+			}
+			catch{
+				isParsed = false;
+			}
+			if(!isParsed){
+				const lines = contents.split(/\r?\n/);
+				for(let i = 0; i < lines.length; i++){
+					try{
+						coords.push(l.getCoordinatesFromURL(lines[i]));
+					}
+					catch(e){
+						displayError(lines[i], e.message);
 					}
 				}
-			};
+			}
+			const segmentSize = 500;
+			const segments = Math.ceil(coords.length / segmentSize);
+			setErrorCoords([]);
+			setProgress({current: 0, max: coords.length});
+			convertCoords(l, segments, segmentSize, coords);
+			e.target.value = e.target.defaultValue;
 		}
-	, []);
+	}
 
 	const actionButtons = [
 		{
@@ -133,10 +120,10 @@ export default function PanoTools(){
 			</Head>
 			<h1>geoguessr pano id tools</h1>
 			<div id="pano-action-buttons" className="centered">action: 
-				<SelectorButtonGroup buttons={actionButtons} name="pano-action" />
+				<SelectorButtonGroup buttons={actionButtons} name="pano-action" onChange={e => setAction(e.target.value)} />
 			</div>
 			<div id="pano-entry" className="centered">
-				select map file: <input type="file" className="file-upload" accept=".json"/>
+				select map file: <input type="file" className="file-upload" accept=".json" onChange={fixPano}/>
 			</div>
 			<div id="progress-bar" className="centered">
 				<progress value={progress.current} max={progress.max}/> {progress.current} / {progress.max}

@@ -7,8 +7,8 @@ import WritingGame from '/browser-modules/writing-game';
 
 const game = new WritingGame(process.env.NEXT_PUBLIC_GOOGLE_API_KEY);
 
-export default function WritingSystems( {languages}){
-	const languageButtons = languages.map( l => {
+export default function WritingSystems({languages}){
+	const languageButtons = languages.map(l => {
 		return {
 			"id": `language-selector-${l.id}`,
 			"text": l.englishName,
@@ -20,7 +20,7 @@ export default function WritingSystems( {languages}){
 	let [answerText, setAnswerText] = useState("");
 	let [correctness, setCorrectness] = useState("correct");
 
-	const guess = useCallback( () => {
+	const guess = useCallback(() => {
 		const guess=document.getElementById("guess").value;
 		if(game.validate(guess)){
 			setCorrectness("correct");
@@ -32,24 +32,24 @@ export default function WritingSystems( {languages}){
 			setAnswerText(`incorrect! ${game.question} is not ${guess}`);
 		}
 	});
-	const giveUp = useCallback( () => {
+	const giveUp = useCallback(() => {
 		setCorrectness("incorrect");
 		setAnswerText(`unlucky! ${game.question} is ${game.answer}`);
 		nextWord();
 	});
-	const nextWord = useCallback( async () => {
+	const nextWord = useCallback(async () => {
 		document.getElementById("guess").value = "";
 		setQuestion(await game.nextWord());
 	});
-	const selectLanguage = useCallback( async(language) => {
+	const selectLanguage = useCallback(async(language) => {
 		localStorage.setItem("selectedLanguage", language);
 		await game.setLanguage(language);
 		nextWord(game);
 	});
 
-	useEffect( () => {
+	useEffect(() => {
 		let selectedLanguage = localStorage.getItem("selectedLanguage");
-		selectedLanguage = selectedLanguage === null ? "ru" : selectedLanguage;
+		selectedLanguage = selectedLanguage || "ru"; // default to russian because it's what most people want
 		selectLanguage(selectedLanguage, game);
 		document.getElementById(`language-selector-${selectedLanguage}`).checked = true;
 		const selectorButtons = document.getElementsByName("language-selector");
@@ -70,7 +70,7 @@ export default function WritingSystems( {languages}){
 			</div>
 			<div id="question" className="centered">
 				<span id="current-question">{question}</span>
-				<button id="audio-button" onClick={()=>game.listen()}>🔊</button>
+				<button id="audio-button" onClick={() => game.listen()}>🔊</button>
 			</div>
 			<div id="answer" className={"centered " + correctness}>
 				{answerText}
