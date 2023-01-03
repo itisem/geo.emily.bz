@@ -2,17 +2,19 @@
 	display: none;
 }
 .button input + label{
-	background: var(--light2);
-	border: 1px solid var(--dark2);
+	background: var(--highlight1);
+	border: 1px solid var(--highlight3);
 	border-radius: 5px;
 	padding: 5px;
 	cursor: pointer;
 	font-size: 14px;
+	color: var(--text2);
+	font-family: "Manrope";
 }
 .button input:checked + label{
-	background: var(--dark2);
-	color: var(--light2);
+	background: var(--highlight2);
 }
 .button input:hover + label{
-	background: var(--dark1);
+	background: var(--highlight3);
+	color: var(--text);
 }

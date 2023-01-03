@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Button from "/components/button";
 import SelectorButtonGroup from "/components/selector-button-group";
 import Database from "better-sqlite3";
 import * as appRoot from "app-root-path";
@@ -18,27 +19,27 @@ export default function WritingSystems({languages}){
 
 	let [question, setQuestion] = useState("");
 	let [answerText, setAnswerText] = useState("");
-	let [correctness, setCorrectness] = useState("correct");
+	let [correctness, setCorrectness] = useState(true);
+	let [currentGuess, setCurrentGuess] = useState("");
 
 	const guess = useCallback(() => {
-		const guess=document.getElementById("guess").value;
-		if(game.validate(guess)){
-			setCorrectness("correct");
+		if(game.validate(currentGuess)){
+			setCorrectness(true);
 			setAnswerText(`correct! ${game.question} is ${game.answer}`);
 			nextWord();
 		}
 		else{
-			setCorrectness("incorrect");
-			setAnswerText(`incorrect! ${game.question} is not ${guess}`);
+			setCorrectness(false);
+			setAnswerText(`incorrect! ${game.question} is not ${currentGuess}`);
 		}
 	});
 	const giveUp = useCallback(() => {
-		setCorrectness("incorrect");
+		setCorrectness(false);
 		setAnswerText(`unlucky! ${game.question} is ${game.answer}`);
 		nextWord();
 	});
 	const nextWord = useCallback(async () => {
-		document.getElementById("guess").value = "";
+		setCurrentGuess("");
 		setQuestion(await game.nextWord());
 	});
 	const selectLanguage = useCallback(async(language) => {
@@ -63,24 +64,60 @@ export default function WritingSystems({languages}){
 			<Head>
 				<title>geoguessr language learning tools</title>
 				<meta charSet="utf-8" />
-				<link rel="stylesheet" href="/styles/writing-systems.css"/>
 			</Head>
-			<div id="language-selector" className="centered">language: 
+			<menu id="language-selector" className="centered">language: 
 					<SelectorButtonGroup buttons={languageButtons} name="language-selector" />
-			</div>
-			<div id="question" className="centered">
-				<span id="current-question">{question}</span>
-				<button id="audio-button" onClick={() => game.listen()}>🔊</button>
-			</div>
-			<div id="answer" className={"centered " + correctness}>
+			</menu>
+			<section id="question" className="centered">
+				<span
+					id="current-question"
+					style={{
+						margin: "10px 0 10px 0",
+						fontSize: "2em",
+						fontWeight: "bold"
+					}}
+				>
+					{question}
+				</span>
+				<Button
+					id="audio-button"
+					onClick={() => game.listen()}
+					style={{
+						height: "3em",
+						margin: "auto 10px"
+					}}
+				>
+					🔊
+				</Button>
+			</section>
+			<section
+				id="answer"
+				style={{
+					textAlign: "center",
+					color: correctness ? "var(--success)" : "var(--error)"
+				}}
+			>
 				{answerText}
-			</div>
+			</section>
 			<div id="guessOrGiveUp" className="centered">
-				<input type="text" id="guess" onKeyUp ={(e) => {if(e.keyCode == 13)guess();}}/>
-				<button id="guessButton" onClick={guess}>guess</button>
-				<button id="giveUp" onClick={giveUp}>give up</button>
+				<input
+					type="text"
+					id="guess"
+					onKeyUp={(e) => {if(e.keyCode == 13)guess();}}
+					onChange={(e) => setCurrentGuess(e.target.value)}
+					value={currentGuess}
+				/>
+				<Button id="guessButton" onClick={guess}>guess</Button>
+				<Button id="giveUp" onClick={giveUp}>give up</Button>
 			</div>
-			<div id="faq">
+			<div
+				id="faq"
+				style={{
+					maxWidth: 800,
+					margin: "0 auto",
+					textAlign: "justify"
+				}}
+			>
 				<h2>faq & notes</h2>
 				<p>all data comes from wikidata. this means two things:<br/>
 				a) transliterations may occasionally be different than the ones that google maps provides.
@@ -90,7 +127,7 @@ export default function WritingSystems({languages}){
 				<p>i am planning to add more languages soon, but each one requires some adjustments, and therefore
 				i will add them as they come.</p>
 				<details>
-				<summary>changelog:</summary>
+				<summary>changelog (click to expand):</summary>
 					<ul>
 						<li>2022-10-18: all data is now stored on my server. this improves loading times considerably, and fixes a bug where the same few questions would repeat</li>
 						<li>2021-12-31: initial version</li>

@@ -1,4 +1,5 @@
 import Head from "next/head";
+import DownloadButton from "/components/download-button";
 import SelectorButtonGroup from "/components/selector-button-group";
 import {useEffect, useState, useCallback} from 'react';
 import LocationFixer from '/browser-modules/location-fixer';
@@ -122,25 +123,35 @@ export default function PanoTools(){
 			<div id="pano-action-buttons" className="centered">action: 
 				<SelectorButtonGroup buttons={actionButtons} name="pano-action" onChange={e => setAction(e.target.value)} />
 			</div>
-			<div id="pano-entry" className="centered">
+			<div id="pano-entry" className="centered" style={{margin: 10}}>
 				select map file: <input type="file" className="file-upload" accept=".json" onChange={fixPano}/>
 			</div>
 			<div id="progress-bar" className="centered">
 				<progress value={progress.current} max={progress.max}/> {progress.current} / {progress.max}
 			</div>
-			<div id="summary" className="centered">
+			<div id="summary" className="centered" style={{minHeight: 30}}>
 				<details>
-					<summary>errors ({errorCoords.length}):</summary>
+					<summary style={{textAlign: "center"}}>errors ({errorCoords.length}):</summary>
 					<p dangerouslySetInnerHTML={{__html: errorMessage}}></p>
 				</details>
 			</div>
-			<div id="download" className="centered">
+			<div id="download" className="centered" style={{height: 20}}>
 				<div id="download-group" style={{"display": display}}>
-					<a className="button" id="download-new-json" href={'data:text/plain;charset=utf-8,' + encodeURIComponent(outputJson)} download={fileName + ".pano.json"}>download new locations</a>
-					<a className="button" id="download-error-json" href={'data:text/plain;charset=utf-8,' + encodeURIComponent(JSON.stringify({"customCoordinates":errorCoords}))} download={fileName + ".error.json"}>download locations with errors</a>
+					<DownloadButton
+						contents={outputJson}
+						name={fileName + ".pano.json"}
+					>
+						download new locations
+					</DownloadButton>
+					<DownloadButton
+						contents={JSON.stringify({"customCoordinates":errorCoords})}
+						name={fileName + ".error.json"}
+					>
+						download locations with errors
+					</DownloadButton>
 				</div>
 			</div>
-			<div id="pano-faq" className="bottom">
+			<div id="pano-faq" className="bottom" style={{maxWidth: "800px", margin: "0 auto"}}>
 				<h2>faq</h2>
 				<ul>
 					<li>if you want to keep editing your map, i highly recommend using <a href="https://map-making.app/">map-making.app</a> instead of the official mapmaker.</li>

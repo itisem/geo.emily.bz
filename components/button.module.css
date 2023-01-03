@@ -1,0 +1,28 @@
+.normal, .dark{
+	display: inline-block;
+	border-radius: 5px;
+	margin: 0 5px 0 5px;
+	cursor: pointer;
+	padding: 5px;
+	font-family: "Manrope";
+}
+
+.normal{
+	background: var(--highlight1);
+	border: 1px solid var(--highlight2);
+	color: var(--text2);
+}
+
+.normal:hover{
+	background: var(--highlight2);
+}
+
+.dark{
+	background: var(--bglight);
+	border: 1px solid var(--bgdark);
+	color: var(--text);
+}
+
+.dark:hover{
+	background: var(--bgdark);
+}

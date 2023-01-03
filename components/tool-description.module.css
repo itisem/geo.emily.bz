@@ -1,5 +1,23 @@
 .tool-description{
-	max-width: 1200px;
 	margin: 0 auto;
+	text-align: justify;
+	border-radius: 30px;
+	width: 300px;
+	height: 90%;
+	background: rgba(0, 0, 0, 0.2);
+}
+
+.tool-description h2{
 	text-align: center;
+	color: var(--highlight1);
+}
+
+.tool-description p{
+	padding-left: 10px;
+	padding-right: 10px;
+	color: var(--text);
+}
+
+.tool-description:hover{
+	background: rgba(0, 0, 0, 0.4);
 }

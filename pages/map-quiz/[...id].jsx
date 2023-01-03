@@ -7,7 +7,7 @@ import bbox from "@turf/bbox";
 import * as crypto from "crypto";
 
 import DeckGL from '@deck.gl/react';
-import MapTiles from "/components/deck.gl/map-tiles";
+import MapTiles from "/components/map-tiles";
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PostProcessEffect, MapView} from '@deck.gl/core';
 import {triangleBlur} from '@luma.gl/shadertools';
@@ -16,6 +16,10 @@ import {useState, useEffect, useCallback} from 'react';
 import Head from "next/head";
 
 import SelectorButtonGroup from "/components/selector-button-group";
+import Menu from "/components/menu";
+import Footer from "/components/footer";
+import Button from "/components/button";
+
 import MapQuiz from "/browser-modules/map-quiz";
 
 const gmButtons = [
@@ -43,20 +47,20 @@ const osmButtons = [
 ];
 
 const correctnessStyles = {
-	wrong: [169, 50, 38],
-	correct: [34, 153, 84],
-	unselected: [31, 97, 141],
+	wrong: [139, 0, 0],
+	correct: [0, 139, 0],
+	unselected: [70, 12, 104],
 	force: [255, 255, 0],
-	roundWrong: [255, 165, 0],
-	hovering: [255, 255, 255]
+	roundWrong: [139, 64, 0],
+	hovering: [33, 8, 73]
 };
 
 export default function MapQuizPage(props){
 	if(props.error){
 		return (
 			<div className="container">
-				<h1>Error: {props.errorMessage}</h1>
-				<div className="centered"><a href="/map-quiz">Return to quizzes</a></div>
+				<h1>error: {props.errorMessage}</h1>
+				<div className="centered"><a href="/map-quiz">return to quizzes</a></div>
 			</div>
 		);
 	}
@@ -66,7 +70,7 @@ export default function MapQuizPage(props){
 	const [quiz, setQuiz] = useState(new MapQuiz(props));
 
 	const [mapType, setMapType] = useState(props.defaultMap);
-	const [mapVisible, setMapVisible] = useState(true);
+	const [visibleMenu, setVisibleMenu] = useState("");
 	const [forceClick, setForceClick] = useState(true);
 	const [displayBorders, setDisplayBorders] = useState(true);
 	const [maxTries, setMaxTries] = useState(1);
@@ -90,7 +94,7 @@ export default function MapQuizPage(props){
 			setCurrentQuestion(quiz.nextQuestion());
 		}
 		if(quiz.questions.length == 0){
-			setMapVisible(false);
+			setVisibleMenu("game-over");
 		}
 	}, [forceClick, currentQuestion, roundWrong])
 
@@ -103,8 +107,8 @@ export default function MapQuizPage(props){
 
 
 	const restartQuiz = () => {
-		if(!mapVisible){
-			setMapVisible(true);
+		if(visibleMenu){
+			setVisibleMenu("");
 		}
 		setRoundWrong([]);
 		quiz.randomiseQuestions();
@@ -176,7 +180,7 @@ export default function MapQuizPage(props){
 	const [hoveringLayer, setHoveringLayer] = useState(null);
 
 	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
-	const refreshHovering = () => displayBorders && mapVisible ? setHoveringLayer(createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false)) : setHoveringLayer([]);
+	const refreshHovering = () => displayBorders && !visibleMenu ? setHoveringLayer(createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false)) : setHoveringLayer([]);
 
 	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
 	useEffect(() => refreshHovering(), [hovering]);
@@ -184,12 +188,13 @@ export default function MapQuizPage(props){
 	useEffect(() => {
 		quiz.randomiseQuestions(); // moved here to avoid hydration errors
 		setCurrentQuestion(quiz.currentQuestionHTML);
-		setViewState(getViewStateFromBounds(props.bbox, window.innerWidth, window.innerHeight));
+		setViewState(getViewStateFromBounds(props.bbox, window.innerWidth, window.innerHeight - 200));
 	}, []);
 
 	return (
 		<>
 			<Head><title>{props.title} map quiz</title></Head>
+			<Menu />
 			<progress 
 				max={totalQuestions}
 				value={totalQuestions - quiz.questionOrder.length}
@@ -200,14 +205,13 @@ export default function MapQuizPage(props){
 					left: "50%",
 					transform: "translateX(-50%)",
 					width: "min(25%, 150px)",
-					accentColor: "var(--dark1)"
 				}}
 			/>
 			<div
 				id="top-bar"
 				style={{
 					position: "fixed",
-					top: "10px",
+					top: "60px",
 					left: "50%",
 					transform: "translateX(-50%)",
 					zIndex: "98",
@@ -215,87 +219,84 @@ export default function MapQuizPage(props){
 					margin: 0,
 					paddingTop: "5px",
 					paddingBottom: "5px",
-					background: quiz.isImageQuestion ? "none" : "var(--light1)",
+					background: quiz.isImageQuestion ? "none" : "var(--bglight)",
 					fontFamily: "Manrope",
-					visibility: mapVisible ? "visible" : "hidden",
+					visibility: visibleMenu ? "hidden" : "visible",
 					fontSize: "1.5em",
 					maxWidth: "33vw",
-					textAlign: "center"
+					textAlign: "center",
+					borderRadius: "10px"
 				}}
 			>
 				<div id="question" dangerouslySetInnerHTML={{__html: currentQuestion}}></div>
 				<div id="skip-button" style={{textAlign: "center"}}>
-					<button id="skip" onClick={skipQuestion}>Skip</button>
-					<button id="restart" onClick={restartQuiz}>Restart</button>
+					<Button id="skip" onClick={skipQuestion}>Skip</Button>
+					<Button id="restart" onClick={restartQuiz}>Restart</Button>
 				</div>
+			</div>
+
+			<div
+				id="top-right-icons"
+				style={{
+					position: "fixed",
+					top: "60px",
+					right: "10px",
+					zIndex: "99",
+					fontSize: "2em"
+				}}
+			>
+				<Button dark={true}>⚙️</Button>
+				<Button dark={true}>❓</Button>
 			</div>
 
 			<div
 				id="settings"
 				style={{
 					position: "fixed",
-					top: "10px",
-					right: "10px",
+
 					textAlign: "right",
 					zIndex: "99",
-					background: "var(--light1)",
-					visibility: mapVisible ? "visible" : "hidden",
+					background: "var(--bglight)",
+					visibility: visibleMenu === "settings" ? "visible" : "hidden",
 					padding: 0,
 					margin: 0,
 					paddingTop: "5px",
 					fontFamily: "Manrope",
 				}}
 			>
-				<details> 
-					<summary>⚙️Settings</summary>
-					Select map: 
-						<b>Google Maps</b>: <SelectorButtonGroup buttons={gmButtons} onChange={e => setMapType(e.target.value)} name="select-map" />
-						<b>OSM</b>: <SelectorButtonGroup buttons={osmButtons} onChange={e => setMapType(e.target.value)} name="select-map" /><br/>
-						<input type="checkbox" id="force-click" name="force-click" onChange={changeForceClick} checked={forceClick} />
-						<label htmlFor="force-click">Force click on correct answer</label>
-						<input type="checkbox" id="display-borders" name="display-borders" onChange={changeDisplayBorders} checked={displayBorders} />
-						<label htmlFor="display-borders">Show borders</label><br />
-						<label htmlFor="max-tries">Maximum tries: </label>
-						<input type="number" id="max-tries" name="max-tries" value={maxTries} size="3" min="0" onChange={changeTries} /><br />
-				</details>
-			</div>
-
-			<div
-				id="back"
-				style={{
-					position: "fixed",
-					top: "10px",
-					left: "10px",
-					zIndex: "97",
-					background: "var(--light1)",
-					fontFamily: "Manrope",
-					maxWidth: "33vw"
-				}}
-			>
-				<a href="/map-quiz">&lt; Back to quizzes</a>
+				select map: 
+					<b>google maps</b>: <SelectorButtonGroup buttons={gmButtons} onChange={e => setMapType(e.target.value)} name="select-map" />
+					<b>osm</b>: <SelectorButtonGroup buttons={osmButtons} onChange={e => setMapType(e.target.value)} name="select-map" /><br/>
+					<input type="checkbox" id="force-click" name="force-click" onChange={changeForceClick} checked={forceClick} />
+					<label htmlFor="force-click">force click on correct answer</label>
+					<input type="checkbox" id="display-borders" name="display-borders" onChange={changeDisplayBorders} checked={displayBorders} />
+					<label htmlFor="display-borders">show borders</label><br />
+					<label htmlFor="max-tries">maximum tries: </label>
+					<input type="number" id="max-tries" name="max-tries" value={maxTries} size="3" min="0" onChange={changeTries} /><br />
 			</div>
 
 			<div
 				id="game-over"
 				style={{
-					visibility: mapVisible ? "hidden" : "visible",
+					visibility: visibleMenu === "game-over" ? "visible" : "hidden",
 					position: "fixed",
 					top: "50%",
 					left: "50%",
 					transform: "translate(-50%, -50%)",
-					background: "var(--light1)",
+					background: "var(--bglight)",
 					fontFamily: "Manrope",
 					zIndex: "999",
 					padding: "2em",
 					fontSize: "1.5em",
-					textAlign: "center"
+					textAlign: "center",
+					borderRadius: "30px"
 				}}
 			>
 				<div style={{fontSize: "2em"}}>
 					Game over!
 				</div>
 				You got {quiz.totalCorrect} out of {totalQuestions} questions correct. <br/>
-				<button
+				<Button
 					id="restart-button"
 					onClick = {restartQuiz}
 					style = {{
@@ -303,23 +304,27 @@ export default function MapQuizPage(props){
 					}}
 				>
 					Restart
-				</button><br/>
+				</Button><br/>
 				<a href="/map-quiz">&lt; Back to quizzes</a>
 			</div>
 
 			<div id="map">
 				<DeckGL
-					controller={mapVisible}
+					controller={!visibleMenu}
 					initialViewState={viewState}
 					views={new MapView({repeat:true})}
 					layers={[MapTiles(mapType), ...questionLayers, hoveringLayer]}
-					effects={mapVisible? [] : [new PostProcessEffect(triangleBlur,{radius: 5})]}
+					effects={visibleMenu ? [new PostProcessEffect(triangleBlur,{radius: 5})] : []}
 					repeat={true}
 					onHover={({object}) => {
 						if(!object){if(hovering) setHovering("");}
 						else{if(object.properties.__key !== hovering) setHovering(object.properties.__key);}
 					}}
 					getCursor={({isDragging}) => isDragging ? "grabbing" : (hovering ? "pointer" : "default")}
+					style={{
+						top: 50,
+						height: "calc(100% - 50px)",
+					}}
 				/>
 			</div>
 		</>

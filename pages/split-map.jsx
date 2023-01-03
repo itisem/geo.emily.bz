@@ -1,5 +1,6 @@
 import Head from "next/head";
 import {useEffect, useState} from 'react';
+import DownloadButton from "/components/download-button";
 
 const splitSize = 50000;
 const noMap = {customCoordinates: []};
@@ -38,17 +39,17 @@ export default function SplitMap(){
 		reader.onerror = () => setErrorMessage("error while reading the file");
 	};
 
-	const downloadSplit = n => {
+	const PartDownloadButton = n => {
 		const newMap = {...map};
 		newMap.customCoordinates = map.customCoordinates.slice(n * splitSize, (n+1) * splitSize);
-		const newMapText = JSON.stringify(newMap);
-		const blob = new Blob([newMapText]);
-		const url = window.URL.createObjectURL(blob);
-		const a = document.createElement("a");
-		a.href = url;
-		a.download = `${fileName}.part-${n+1}.json`;
-		a.click();
-		window.URL.revokeObjectURL(url);
+		return (
+			<DownloadButton
+				name={`${fileName}.part-${n+1}.json`}
+				contents={JSON.stringify(newMap)}
+			>
+				part {n+1}
+			</DownloadButton>
+		);
 	}
 
 	const range = n => [...Array(n).keys()];
@@ -67,7 +68,7 @@ export default function SplitMap(){
 			</div>
 			<div id="split-links" className="centered" style={display(map.customCoordinates.length !== 0)}>
 			download files: 
-				{range(Math.ceil(map.customCoordinates.length / splitSize)).map(i => <button onClick={() => downloadSplit(i)}>part {i + 1}</button>)}
+				{range(Math.ceil(map.customCoordinates.length / splitSize)).map(i => PartDownloadButton(i))}
 			</div>
 			<div id="error-message" className="centered" style={display(errorMessage !== "")}>
 				{errorMessage}
