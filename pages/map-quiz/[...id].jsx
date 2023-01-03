@@ -74,7 +74,6 @@ export default function MapQuizPage(props){
 	const [roundWrong, setRoundWrong] = useState([]);
 	const [currentQuestion, setCurrentQuestion] = useState(quiz.currentQuestionHTML);
 
-	//const getSelected = name => document.querySelector(`input[name="${name}"]:checked`).value;
 	const changeForceClick = (e) => setForceClick(e.target.checked);
 	const changeTries = (e) => setMaxTries(e.target.value);
 	const changeDisplayBorders = (e) => setDisplayBorders(e.target.checked);

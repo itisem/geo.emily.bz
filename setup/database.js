@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import {flag as emoji} from "country-emoji";
 
 const db = new Database("../data/data.db");
 const structureQueries = [
@@ -146,6 +147,38 @@ const structureQueries = [
 		db.prepare(`ALTER TABLE users DROP COLUMN permissions`).run();
 		db.prepare(`ALTER TABLE users ADD COLUMN permissions TEXT`).run();
 		permissionsFixed.map(x => db.prepare(`UPDATE users SET permissions=? WHERE id=?`).run(x.permissions, x.id));
+	},
+	function frontpageFixes(db){
+		db.prepare(`CREATE TABLE IF NOT EXISTS quizCategories(
+			category TEXT PRIMARY KEY NOT NULL,
+			name TEXT NOT NULL,
+			emoji TEXT,
+			isCountry INTEGER DEFAULT 1 NOT NULL
+		)`).run();
+		const quizzes = db.prepare(`SELECT * FROM quizAliases`).all();
+		db.prepare(`ALTER TABLE quizAliases RENAME COLUMN frontpageCategory TO category`).run();
+		db.prepare(`ALTER TABLE quizAliases RENAME COLUMN frontpageTitle TO altTitle`).run();
+		db.prepare(`ALTER TABLE quizAliases ADD COLUMN isFrontPage INTEGER DEFAULT 0 NOT NULL`).run();
+		let categoryNames = {};
+		for(let quiz of quizzes){
+			const alias = quiz.alias;
+			const category = alias.split("/")[0];
+			const isFrontPage = + (!!quiz.frontpageCategory);
+			db.prepare(`UPDATE quizAliases
+				SET category = :category, isFrontPage = :isFrontPage
+				WHERE alias = :alias
+			`).run({category, isFrontPage, alias});
+			if(quiz.frontpageCategory){
+				categoryNames[category] = quiz.frontpageCategory;
+			}
+		}
+		for(let category in categoryNames){
+			db.prepare(`INSERT INTO quizCategories(category, name, emoji) VALUES(:category, :name, :emoji)`).run({
+				category: category,
+				name: categoryNames[category],
+				emoji: emoji(categoryNames[category])
+			});
+		}
 	}
 ]; // adding / removing columns should be done by a new query here to ensure database is versioned correctly
 

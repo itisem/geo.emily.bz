@@ -6,14 +6,14 @@ export default function getUserQuizzes(user){
 		SELECT quizzes.id, quizzes.title, users.displayName
 		FROM quizzes LEFT JOIN users ON quizzes.user = users.id 
 		WHERE LOWER(displayName) = ?
-	`).all([user.toLowerCase()]);
+	`).all(user.toLowerCase());
 	const frontpageQuizzes = db.prepare(`
 		SELECT quizAliases.id, quizAliases.alias, users.displayName
 		FROM quizAliases LEFT JOIN users ON quizAliases.user = users.id
 		WHERE 
 			LOWER(displayName) = ?
-			AND frontpageTitle IS NOT NULL
-	`).all([user.toLowerCase()]);
+			AND isFrontpage = 1
+	`).all(user.toLowerCase());
 	if(quizzes.length === 0){
 		const usernameExists = !!db.prepare("SELECT * FROM users WHERE LOWER(displayName) = ?").get([user.toLowerCase()]);
 		if(!usernameExists) throw "user does not exist";

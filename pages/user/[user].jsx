@@ -50,7 +50,7 @@ export function getStaticProps({params}){
 	const user = params.user[0] === "@" ? params.user.slice(1) : params.user;
 	let details;
 	try{
-		details = getUserQuizzes(pageParam);
+		details = getUserQuizzes(user);
 	}
 	catch(e){
 		return {props: {pageType: "error", errorMessage: e}};
@@ -60,7 +60,7 @@ export function getStaticProps({params}){
 		props: {
 			pageType: "user",
 			quizzes: details,
-			category: pageParam
+			user: user
 		}
 	}
 }

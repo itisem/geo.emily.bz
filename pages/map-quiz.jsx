@@ -1,16 +1,13 @@
 import Database from "better-sqlite3";
 import * as appRoot from "app-root-path";
-import {flag} from "country-emoji";
 import Head from "next/head";
-
-const emoji = country => {if(country=="Eswatini")return "🇸🇿"; return flag(country);}
 
 function CountryContainer({quizzes, category}){
 	return (
 		<section key={category}>
-			<h2 style={{textAlign: "center", fontFamily: "TwemojiFlags, Manrope"}}>{emoji(category)} {category}</h2>
+			<h2 style={{textAlign: "center", fontFamily: "TwemojiFlags, Manrope"}}>{quizzes[0].emoji} {category}</h2>
 			<ul>
-				{quizzes.map(quiz => <li key={quiz.alias}><a href={"/map-quiz/" + quiz.alias}>{quiz.frontpageTitle}</a></li>)}
+				{quizzes.map(quiz => <li key={quiz.alias}><a href={"/map-quiz/" + quiz.alias}>{quiz.altTitle}</a></li>)}
 			</ul>
 		</section>
 	);
@@ -42,14 +39,14 @@ export default function MapQuiz({quizzes}){
 export function getStaticProps(){
 	const db = new Database(`${appRoot}/data/data.db`);
 	const quizzes = db.prepare(`
-		SELECT alias, frontpageTitle, frontpageCategory
-		FROM quizAliases
-		WHERE frontpageCategory IS NOT NULL
-		ORDER BY frontpageCategory ASC
+		SELECT alias, altTitle, name, emoji, isCountry
+		FROM quizAliases INNER JOIN quizCategories ON quizAliases.category = quizCategories.category
+		WHERE isFrontPage = 1
+		ORDER BY name ASC
 	`).all();
 	let quizzesByCategory = {};
 	for(let quiz of quizzes){
-		const category = quiz.frontpageCategory;
+		const category = quiz.name;
 		if(!quizzesByCategory[category]){
 			quizzesByCategory[category] = [];
 		}
