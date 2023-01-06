@@ -47,7 +47,7 @@ export async function getStaticPaths(){
 }
 
 export function getStaticProps({params}){
-	const user = params.user[0] === "@" ? params.user.slice(1) : params.user;
+	const user = params.user;
 	let details;
 	try{
 		details = getUserQuizzes(user);

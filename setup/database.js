@@ -179,6 +179,9 @@ const structureQueries = [
 				emoji: emoji(categoryNames[category])
 			});
 		}
+	},
+	function moreUserInfo(db){
+		db.prepare(`ALTER TABLE users ADD COLUMN memberSince INTEGER DEFAULT 0 NOT NULL`).run();
 	}
 ]; // adding / removing columns should be done by a new query here to ensure database is versioned correctly
 

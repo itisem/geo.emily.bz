@@ -6,11 +6,11 @@ import * as bcrypt from "bcrypt";
 export default function login(username, password, settings = {}){
 	const sessionDuration = +process.env.SESSION_DURATION || 1000*60*60*24*14;
 	const db = openDB();
-	if(!validateUsername(username, settings)) return Promise.reject("INVALID_USERNAME");
+	if(!validateUsername(username, settings)) return Promise.reject("invalid username");
 	const userData = db.prepare("SELECT * FROM users WHERE LOWER(displayName) = ?").get([username.toLowerCase()]);
-	if(!userData) return Promise.reject("USERNAME_DOES_NOT_EXIST");
+	if(!userData) return Promise.reject("username does not exist");
 	return bcrypt.compare(password, userData.password).then(result => {
-		if(!result) return Promise.reject("INCORRECT_PASSWORD");
+		if(!result) return Promise.reject("incorrect password");
 		const sessionId = crypto.randomBytes(32).toString("base64");
 		const expiry = Date.now() + sessionDuration;
 		db.prepare("INSERT INTO sessions(sessionId, userId, expiry) VALUES (:sessionId, :userId, :expiry)").run({

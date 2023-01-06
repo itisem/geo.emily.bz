@@ -2,18 +2,17 @@ import openDB from './open-db';
 import * as crypto from "crypto";
 import * as bcrypt from "bcrypt";
 import validateUsername from "./validate-username";
+import validatePassword from "./validate-password";
 
 export default function createAccount(username, password, settings = {}){
 	const db = openDB();
 	const usernameCheck = /^[a-zA-Z][a-zA-Z0-9\-]{1,18}[a-zA-Z]$/;
-	if(!validateUsername(username, settings)) return Promise.reject("INVALID_USERNAME");
+	if(!validateUsername(username, settings)) return Promise.reject("invalid username");
 
 	const usernameExists = !!db.prepare("SELECT * FROM users WHERE LOWER(displayName) = ?").get([username.toLowerCase()]);
-	if(usernameExists) return Promise.reject("USER_EXISTS");
+	if(usernameExists) return Promise.reject("user already exists");
 
-	const passwordChecks = [/^.{0,12}$/, /^[a-zA-Z]*$/, /^[0-9]*$/];
-	const validPassword = passwordChecks.map(check => !password.match(check)).every(x => x);
-	if(!validPassword) return Promise.reject("INVALID_PASSWORD");
+	if(!validatePassword(password)) return Promise.reject("invalid password");
 
 	const id = crypto.randomUUID();
 	const saltRounds = 10;
