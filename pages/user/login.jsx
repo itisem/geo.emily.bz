@@ -9,6 +9,7 @@ export default function LoginPage(){
 	const [password, setPassword] = useState("");
 	const [success, setSuccess] = useState(false);
 	const [errorMessage, setErrorMessage] = useState("");
+	const [autofocusTarget, setAutofocusTarget] = useState("username");
 
 	const colours = {
 		1: "var(--success)",
@@ -26,7 +27,7 @@ export default function LoginPage(){
 		}).then(response => response.json()).then(
 			data => {
 				if(data.error){
-					setErrorMessage(`error: ${data.error}`);
+					setErrorMessage(`error: ${data.message}`);
 				}
 				else{
 					window.location.replace("/user/me");
@@ -35,17 +36,31 @@ export default function LoginPage(){
 		)
 	}
 
+	const submitOnEnter = (e) => {
+		if(e.keyCode == 13){
+			if(!validateUsername(username)){
+				setAutofocusTarget("username");
+				return;
+			}
+			if(!validatePassword(password)){
+				setAutofocusTarget("password");
+				return;
+			}
+			login();
+		}
+	}
+
 	return (
 		<>
 			<Head>
 				<title>sign in / create account</title>
 			</Head>
 			<h1>log in / create account</h1>
-			<p style={{textAlign: "center"}}>
-				currently, accounts are only used for uploading custom map quizzes.<br/>
-				if you don't want to do that, feel free to ignore this for now -- although i plan to add more features for them later.
+			<p className="centered">
+				currently, accounts are only used the map quizzes.<br/>
+				if you don't want use that part of the website, you don't really need one.
 			</p>
-			<p style={{color: "var(--error)"}}>
+			<p style={{color: "var(--error)"}} className="centered">
 				{errorMessage}
 			</p>
 			<section style={{
@@ -61,6 +76,8 @@ export default function LoginPage(){
 					name="username"
 					value={username}
 					onChange={e => setUsername(e.target.value)}
+					autofocus={autofocusTarget == "username"}
+					onKeyUp={e => submitOnEnter(e)}
 				/>
 				<label htmlFor="password">password: </label>
 				<input
@@ -68,6 +85,8 @@ export default function LoginPage(){
 					name="password"
 					value={password}
 					onChange={e => setPassword(e.target.value)}
+					autofocus={autofocusTarget == "password"}
+					onKeyUp={e => submitOnEnter(e)}
 				/>
 				<Button onClick={login}>sign in</Button>
 				<Button onClick={register}>create account</Button>

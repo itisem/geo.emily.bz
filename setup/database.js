@@ -182,6 +182,15 @@ const structureQueries = [
 	},
 	function moreUserInfo(db){
 		db.prepare(`ALTER TABLE users ADD COLUMN memberSince INTEGER DEFAULT 0 NOT NULL`).run();
+	},
+	function favourites(db){
+		db.prepare(`CREATE TABLE IF NOT EXISTS favouriteQuizzes(
+			id TEXT NOT NULL,
+			creator TEXT NOT NULL,
+			user TEXT NOT NULL,
+			addedAt INTEGER DEFAULT 0 NOT NULL
+			UNIQUE(id, creator, user)
+		)`)
 	}
 ]; // adding / removing columns should be done by a new query here to ensure database is versioned correctly
 
