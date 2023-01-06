@@ -97,6 +97,7 @@ export default function MapQuizPage(props){
 			setCurrentQuestion(quiz.nextQuestion());
 		}
 		if(quiz.questions.length == 0){
+			setTimeDiff(prettyMs(new Date().getTime() - startTime), {verbose: true, secondsDecimalDigits: 0})
 			setVisibleMenu("game-over");
 		}
 	}, [forceClick, currentQuestion, roundWrong])
