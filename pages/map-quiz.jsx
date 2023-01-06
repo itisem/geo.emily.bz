@@ -32,7 +32,7 @@ export default function MapQuiz({quizzes, favouriteQuizzes}){
 				style={{
 					display: "grid",
 					gridGap: "0.25em",
-					gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+					gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
 					gridAutoFlow: "dense",
 				}}
 			>

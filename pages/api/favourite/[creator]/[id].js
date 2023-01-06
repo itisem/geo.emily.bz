@@ -11,7 +11,7 @@ export default function modifyFavourite(req, res){
 	const addedAt = new Date().getTime();
 	switch(req.method){
 		case "PUT":
-			db.prepare(`REPLACE INTO favouriteQuizzes (id, creator, user) VALUES (:id, :creator, :user, :addedAt)`).run({id, creator, user, addedAt});
+			db.prepare(`REPLACE INTO favouriteQuizzes (id, creator, user, addedAt) VALUES (:id, :creator, :user, :addedAt)`).run({id, creator, user, addedAt});
 			break;
 		case "DELETE":
 			db.prepare(`DELETE FROM favouriteQuizzes WHERE id = :id AND creator = :creator AND user = :user`).run({id, creator, user});

@@ -1,3 +1,4 @@
+import checkSession from "/utils/db/check-session";
 import getQuiz from "/utils/db/get-quiz";
 import getOfficialQuiz from "/utils/db/get-official-quiz";
 import getGeoJSONFromCategory from "/utils/db/get-geojson-from-category";
@@ -7,6 +8,8 @@ import getViewStateFromBounds from "/utils/maps/get-viewstate-from-bounds";
 import bbox from "@turf/bbox";
 import * as crypto from "crypto";
 import prettyMs from "pretty-ms";
+import Database from "better-sqlite3";
+import * as appRoot from "app-root-path";
 
 import DeckGL from '@deck.gl/react';
 import MapTiles from "/components/map-tiles";
@@ -20,6 +23,7 @@ import Head from "next/head";
 import SelectorButtonGroup from "/components/selector-button-group";
 import Footer from "/components/footer";
 import Button from "/components/button";
+import FavouriteButton from "/components/favourite-button";
 import ErrorPage from "/components/error-page";
 
 import MapQuiz from "/browser-modules/map-quiz";
@@ -93,7 +97,7 @@ export default function MapQuizPage(props){
 			setCurrentQuestion(quiz.nextQuestion());
 		}
 		if(quiz.questions.length == 0){
-			setMapVisible(false);
+			setVisibleMenu("game-over");
 		}
 	}, [forceClick, currentQuestion, roundWrong])
 
@@ -287,10 +291,11 @@ export default function MapQuizPage(props){
 					top: "60px",
 					right: "10px",
 					zIndex: "99",
-					fontSize: "2em",
+					fontSize: "24px",
 					visibility: visibleMenu === "game-over" ? "hidden" : "visible",
 				}}
 			>
+				<FavouriteButton isLoggedIn={props.isLoggedIn} isFavourited={props.isFavourited} quizId={props.quizId} creatorId={props.creatorId} />
 				<Button
 					dark={true}
 					onClick={
@@ -299,9 +304,6 @@ export default function MapQuizPage(props){
 							else setVisibleMenu("");
 						}
 					}
-					style={{
-						fontSize: "24px"
-					}}
 				>
 					⚙️
 				</Button>
@@ -372,59 +374,83 @@ export default function MapQuizPage(props){
 	);
 }
 
-export function getServerSideProps({params}){
-		let quizDetails;
-		if(params.id[0][0] == "@"){ // user-made quizzes
-				quizDetails = getQuiz(params.id[0].slice(1), params.id[1]);
-		}
-		else{
-				quizDetails = getOfficialQuiz(params.id.join("/"));
-		}
-		if(quizDetails === undefined){
-			return {
-					props: {
-							error: true,
-							errorMessage: "quiz not found"
-					}
-			};
-		}
+export function getServerSideProps(context){
+	const params = context.params;
+	let loggedInAs = "";
+	let isFavourited = false;
+	try{
+		const sessionInfo = checkSession(context.req.cookies.sessionId);
+		loggedInAs = "";
+		loggedInAs = sessionInfo.user.id;
+	}
+	catch{
+		loggedInAs = "";
+	}
 
-		let geoJSONs = getGeoJSONFromCategory(quizDetails.categoryId, quizDetails.categoryUser, quizDetails.displayValues);
-		if(geoJSONs.length === 0){
-			return {
-					props: {
-							error: true,
-							errorMessage: "quiz has no questions"
-					}
-			};
-		}
-		geoJSONs = geoJSONs.map(x => {
-			x.shape = JSON.parse(x.shape);
-			const hash = crypto.createHash('sha256');
-			hash.update(x.user+"/"+x.id);
-			x.key = hash.digest('hex');
-			x.shape.properties["__key"] = x.key;
-			return x;
-		});
-		const coordsOnly = geoJSONs.map(x => {
-			const poly = getGeoJSONPolygon(x.shape);
-			if(poly.type == "Polygon"){
-				return poly.coordinates;
-			}
-			if(poly.type == "MultiPolygon"){
-				return poly.coordinates[0];
-			}
-			return [];
-		});
-		const jsonBbox = bbox({type: "MultiPolygon", coordinates: coordsOnly});
+	let quizDetails;
+	if(params.id[0][0] == "@"){ // user-made quizzes
+			quizDetails = getQuiz(params.id[0].slice(1), params.id[1]);
+	}
+	else{
+			quizDetails = getOfficialQuiz(params.id.join("/"));
+	}
+	if(quizDetails === undefined){
 		return {
 				props: {
-						geoJSONs: geoJSONs,
-						title: quizDetails.title,
-						defaultMap: quizDetails.defaultMap,
-						displayValues: quizDetails.displayValues,
-						bbox: jsonBbox,
-						error: false
+						error: true,
+						errorMessage: "quiz not found"
 				}
 		};
+	}
+
+	const db = new Database(`${appRoot}/data/data.db`);
+
+	isFavourited = !!db.prepare(`SELECT * FROM favouriteQuizzes WHERE creator = :creator AND id = :id AND user = :user`).get({
+		creator: quizDetails.user,
+		id: quizDetails.id,
+		user: loggedInAs
+	})
+
+	let geoJSONs = getGeoJSONFromCategory(quizDetails.categoryId, quizDetails.categoryUser, quizDetails.displayValues);
+	if(geoJSONs.length === 0){
+		return {
+				props: {
+						error: true,
+						errorMessage: "quiz has no questions"
+				}
+		};
+	}
+	geoJSONs = geoJSONs.map(x => {
+		x.shape = JSON.parse(x.shape);
+		const hash = crypto.createHash('sha256');
+		hash.update(x.user+"/"+x.id);
+		x.key = hash.digest('hex');
+		x.shape.properties["__key"] = x.key;
+		return x;
+	});
+	const coordsOnly = geoJSONs.map(x => {
+		const poly = getGeoJSONPolygon(x.shape);
+		if(poly.type == "Polygon"){
+			return poly.coordinates;
+		}
+		if(poly.type == "MultiPolygon"){
+			return poly.coordinates[0];
+		}
+		return [];
+	});
+	const jsonBbox = bbox({type: "MultiPolygon", coordinates: coordsOnly});
+	return {
+			props: {
+					geoJSONs: geoJSONs,
+					creatorId: quizDetails.user,
+					quizId: quizDetails.id,
+					title: quizDetails.title,
+					defaultMap: quizDetails.defaultMap,
+					displayValues: quizDetails.displayValues,
+					bbox: jsonBbox,
+					error: false,
+					isLoggedIn: loggedInAs,
+					isFavourited: isFavourited
+			}
+	};
 }
