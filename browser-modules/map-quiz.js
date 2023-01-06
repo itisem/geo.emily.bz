@@ -57,13 +57,13 @@ export default class MapQuiz{
 		return this.currentQuestionHTML;
 	}
 
-	checkAnswer(answer, setCorrectness = true){
-		const isCorrect = answer === this.questionOrder[0];
-		if(setCorrectness){
-			this.correctness[this.questionOrder[0]] = 2 * isCorrect - 1;
-			this.totalCorrect += isCorrect;
-		}
-		return isCorrect;
+	checkAnswer(answer){
+		return answer === this.questionOrder[0];
+	}
+
+	setCorrectness(isCorrect){
+		this.correctness[this.questionOrder[0]] = 2 * isCorrect - 1;
+		this.totalCorrect += isCorrect;
 	}
 
 	transformValue(q){

@@ -3,8 +3,10 @@ import getOfficialQuiz from "/utils/db/get-official-quiz";
 import getGeoJSONFromCategory from "/utils/db/get-geojson-from-category";
 import getGeoJSONPolygon from "/utils/maps/get-geojson-polygon";
 import getViewStateFromBounds from "/utils/maps/get-viewstate-from-bounds";
+
 import bbox from "@turf/bbox";
 import * as crypto from "crypto";
+import prettyMs from "pretty-ms";
 
 import DeckGL from '@deck.gl/react';
 import MapTiles from "/components/map-tiles";
@@ -16,9 +18,9 @@ import {useState, useEffect, useCallback} from 'react';
 import Head from "next/head";
 
 import SelectorButtonGroup from "/components/selector-button-group";
-import Menu from "/components/menu";
 import Footer from "/components/footer";
 import Button from "/components/button";
+import ErrorPage from "/components/error-page";
 
 import MapQuiz from "/browser-modules/map-quiz";
 
@@ -57,12 +59,7 @@ const correctnessStyles = {
 
 export default function MapQuizPage(props){
 	if(props.error){
-		return (
-			<div className="container">
-				<h1>error: {props.errorMessage}</h1>
-				<div className="centered"><a href="/map-quiz">return to quizzes</a></div>
-			</div>
-		);
+		return (<ErrorPage errorMessage={props.errorMessage} />)
 	}
 	const totalQuestions = props.geoJSONs.length;
 
@@ -76,24 +73,32 @@ export default function MapQuizPage(props){
 	const [maxTries, setMaxTries] = useState(1);
 	const [hovering, setHovering] = useState("");
 	const [roundWrong, setRoundWrong] = useState([]);
+	const [startTime, setStartTime] = useState(0);
+	const [timeDiff, setTimeDiff] = useState(0);
 	const [currentQuestion, setCurrentQuestion] = useState(quiz.currentQuestionHTML);
 
 	const changeForceClick = (e) => setForceClick(e.target.checked);
 	const changeTries = (e) => setMaxTries(e.target.value);
 	const changeDisplayBorders = (e) => setDisplayBorders(e.target.checked);
 
-	const checkAnswer = useCallback((layerKey, jsonKey) => {
+	const checkAnswer = useCallback((jsonKey) => {
 		if(quiz.questions.length === 0) return;
-		if(layerKey == "correct" || layerKey == "wrong") return;
-		const isCorrect = quiz.checkAnswer(jsonKey, roundWrong.length < maxTries);
-		if(!isCorrect){
-			setRoundWrong([...roundWrong, jsonKey]);
+		const isCorrect = quiz.checkAnswer(jsonKey);
+		if(quiz.correctness[jsonKey] !== 0 && !isCorrect) return; // already answered, not the correct question
+		if(roundWrong.length < maxTries){
+			if(!roundWrong.includes(jsonKey)){
+				quiz.setCorrectness(isCorrect);
+			}
+			if(!isCorrect){
+				setRoundWrong([...roundWrong, jsonKey]);
+			}
 		}
-		if(isCorrect || !forceClick){
+		if(isCorrect){
 			setRoundWrong([]);
 			setCurrentQuestion(quiz.nextQuestion());
 		}
 		if(quiz.questions.length == 0){
+			setTimeDiff(prettyMs(new Date().getTime() - startTime, {secondsDecimalDigits: 0, verbose: true}));
 			setVisibleMenu("game-over");
 		}
 	}, [forceClick, currentQuestion, roundWrong])
@@ -101,7 +106,6 @@ export default function MapQuizPage(props){
 	const skipQuestion = () => {
 		if(roundWrong.length == 0) setCurrentQuestion(quiz.skipQuestion());
 		else setCurrentQuestion(quiz.nextQuestion());
-		refreshQuestions();
 		setRoundWrong([]);
 	}
 
@@ -112,105 +116,88 @@ export default function MapQuizPage(props){
 		}
 		setRoundWrong([]);
 		quiz.randomiseQuestions();
-		refreshQuestions();
 		setCurrentQuestion(quiz.currentQuestionHTML);
+		setStartTime(new Date().getTime());
 	}
 
-	const getGeoJSONLayers = () => {
-		let layers = {
-			"current": [],
-			"wrong": [],
-			"unselected": [],
-			"correct": [],
-			"roundWrong": [],
-			"hovering": []
-		};
-		if(!quiz.correctness){ // ensures that un-initialised quizzes work
-			props.geoJSONs.map(x => layers.current.push(x));
-			return layers;
+	const getColour = key => {
+		if(roundWrong.includes(key)) return correctnessStyles.roundWrong;
+		if(quiz.currentQuestionId === key && roundWrong.length >= maxTries) return correctnessStyles.force;
+		switch(quiz.correctness[key]){
+			case -1:
+				return correctnessStyles.wrong;
+			case 0:
+				return correctnessStyles.unselected;
+			case 1:
+				return correctnessStyles.correct;
 		}
-		for(let geo of props.geoJSONs){
-			if(geo.key == hovering){
-				layers.hovering.push(geo);
-			}
-			if(geo.key == quiz.currentQuestionId){
-				layers.current.push(geo);
-			}
-			else{
-				if(roundWrong.includes(geo.key) && roundWrong.length < maxTries){
-					layers.roundWrong.push(geo);
-				}
-				else{
-					switch(quiz.correctness[geo.key]){
-						case -1:
-							layers.wrong.push(geo);
-							break;
-						case 0:
-							layers.unselected.push(geo);
-							break;
-						case 1:
-							layers.correct.push(geo);
-							break;
-					}
-				}
-			}
-		}
-		return [
-			createGeoJSON("wrong", layers.wrong, correctnessStyles.wrong),
-			createGeoJSON("correct", layers.correct, correctnessStyles.correct),
-			createGeoJSON("unselected", layers.unselected, correctnessStyles.unselected),
-			createGeoJSON("roundWrong", layers.roundWrong, correctnessStyles.roundWrong),
-			createGeoJSON("current", layers.current, roundWrong.length >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
-		];
 	}
 
-	const createGeoJSON = (id, jsons, colour, pickable = true) => {return new GeoJsonLayer({
-		id: id,
-		data: jsons.map(geoJSON => geoJSON.shape),
-		getFillColor: [...colour, 100],
+	const jsonLayer = new GeoJsonLayer({
+		id: "geojsons",
+		data: props.geoJSONs.map(geoJSON => geoJSON.shape),
+		getFillColor: (x) => [...getColour(x.properties.__key), 100],
 		stroked: displayBorders,
-		getLineColor: [...colour, 255],
+		getLineColor: (x) => [...getColour(x.properties.__key), 255],
 		getLineWidth: 2,
 		lineWidthUnits: "pixels",
-		pickable,
-		onClick: (e) => checkAnswer(id, e.object.properties.__key)
-	})};
+		pickable: true,
+		onClick: (e) => checkAnswer(e.object.properties.__key)
+	});
 
-	const [questionLayers, setQuestionLayers] = useState(getGeoJSONLayers());
 	const [hoveringLayer, setHoveringLayer] = useState(null);
 
-	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
-	const refreshHovering = () => displayBorders && !visibleMenu ? setHoveringLayer(createGeoJSON("hovering", props.geoJSONs.filter(x => x.key === hovering), correctnessStyles.hovering, false)) : setHoveringLayer([]);
 
-	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
+	const refreshHovering = () => displayBorders && visibleMenu !== "game-over" ?
+		setHoveringLayer(new GeoJsonLayer({
+			id: "hovering",
+			data: props.geoJSONs.filter(x => x.key === hovering).map(x => x.shape),
+			getFillColor: [...correctnessStyles.hovering, 100],
+			stroked: displayBorders,
+			getLineColor: [...correctnessStyles.hovering, 255],
+			getLineWidth: 2,
+			lineWidthUnits: "pixels",
+			pickable: false
+		})) :
+		setHoveringLayer([]);
+
 	useEffect(() => refreshHovering(), [hovering]);
 
 	useEffect(() => {
 		quiz.randomiseQuestions(); // moved here to avoid hydration errors
 		setCurrentQuestion(quiz.currentQuestionHTML);
 		setViewState(getViewStateFromBounds(props.bbox, window.innerWidth, window.innerHeight - 200));
+		setStartTime(new Date().getTime());
 	}, []);
 
 	return (
 		<>
 			<Head><title>{props.title} map quiz</title></Head>
-			<Menu />
-			<progress 
-				max={totalQuestions}
-				value={totalQuestions - quiz.questionOrder.length}
+			<DeckGL
+				controller={visibleMenu !== "game-over"}
+				initialViewState={viewState}
+				views={new MapView({repeat:true})}
+				layers={[MapTiles(mapType), jsonLayer, hoveringLayer]}
+				effects={visibleMenu === "game-over" ? [new PostProcessEffect(triangleBlur,{radius: 5})] : []}
+				repeat={true}
+				onHover={({object}) => {
+					if(!object){if(hovering) setHovering("");}
+					else{if(object.properties.__key !== hovering) setHovering(object.properties.__key);}
+				}}
+				getCursor={({isDragging}) => isDragging ? "grabbing" : (hovering ? "pointer" : "default")}
 				style={{
-					zIndex: "98",
-					position: "fixed",
-					bottom: "10px",
-					left: "50%",
-					transform: "translateX(-50%)",
-					width: "min(25%, 150px)",
+					position: "absolute",
+					width: "100%",
+					height: "calc(100vh - 40px)",
+					top: "40px",
+					margin: "0 auto"
 				}}
 			/>
+
 			<div
 				id="top-bar"
 				style={{
-					position: "fixed",
+					position: "absolute",
 					top: "60px",
 					left: "50%",
 					transform: "translateX(-50%)",
@@ -221,7 +208,7 @@ export default function MapQuizPage(props){
 					paddingBottom: "5px",
 					background: quiz.isImageQuestion ? "none" : "var(--bglight)",
 					fontFamily: "Manrope",
-					visibility: visibleMenu ? "hidden" : "visible",
+					visibility: visibleMenu === "game-over" ? "hidden" : "visible",
 					fontSize: "1.5em",
 					maxWidth: "33vw",
 					textAlign: "center",
@@ -235,33 +222,62 @@ export default function MapQuizPage(props){
 				</div>
 			</div>
 
+			<progress 
+				max={totalQuestions}
+				value={totalQuestions - quiz.questionOrder.length}
+				style={{
+					zIndex: "1",
+					position: "absolute",
+					bottom: "20px",
+					left: "50%",
+					transform: "translateX(-50%)",
+					width: "min(25%, 150px)",
+				}}
+			/>
+
 			<div
 				id="top-right-icons"
 				style={{
-					position: "fixed",
+					position: "absolute",
 					top: "60px",
 					right: "10px",
 					zIndex: "99",
-					fontSize: "2em"
+					fontSize: "2em",
+					visibility: visibleMenu === "game-over" ? "hidden" : "visible",
 				}}
 			>
-				<Button dark={true}>⚙️</Button>
-				<Button dark={true}>❓</Button>
+				<Button
+					dark={true}
+					onClick={
+						() => {
+							if(visibleMenu !== "settings") setVisibleMenu("settings");
+							else setVisibleMenu("");
+						}
+					}
+					style={{
+						fontSize: "24px"
+					}}
+				>
+					⚙️
+				</Button>
 			</div>
 
 			<div
 				id="settings"
 				style={{
-					position: "fixed",
-
+					position: "absolute",
+					right: "10px",
+					top: "110px",
 					textAlign: "right",
 					zIndex: "99",
 					background: "var(--bglight)",
+					borderRadius: "10px",
+					padding: "10px",
 					visibility: visibleMenu === "settings" ? "visible" : "hidden",
 					padding: 0,
 					margin: 0,
 					paddingTop: "5px",
-					fontFamily: "Manrope",
+					fontFamily: "Manrope"
 				}}
 			>
 				select map: 
@@ -279,7 +295,7 @@ export default function MapQuizPage(props){
 				id="game-over"
 				style={{
 					visibility: visibleMenu === "game-over" ? "visible" : "hidden",
-					position: "fixed",
+					position: "absolute",
 					top: "50%",
 					left: "50%",
 					transform: "translate(-50%, -50%)",
@@ -295,7 +311,7 @@ export default function MapQuizPage(props){
 				<div style={{fontSize: "2em"}}>
 					Game over!
 				</div>
-				You got {quiz.totalCorrect} out of {totalQuestions} questions correct. <br/>
+				You got {quiz.totalCorrect} out of {totalQuestions} questions correct in {timeDiff}. <br/>
 				<Button
 					id="restart-button"
 					onClick = {restartQuiz}
@@ -306,26 +322,6 @@ export default function MapQuizPage(props){
 					Restart
 				</Button><br/>
 				<a href="/map-quiz">&lt; Back to quizzes</a>
-			</div>
-
-			<div id="map">
-				<DeckGL
-					controller={!visibleMenu}
-					initialViewState={viewState}
-					views={new MapView({repeat:true})}
-					layers={[MapTiles(mapType), ...questionLayers, hoveringLayer]}
-					effects={visibleMenu ? [new PostProcessEffect(triangleBlur,{radius: 5})] : []}
-					repeat={true}
-					onHover={({object}) => {
-						if(!object){if(hovering) setHovering("");}
-						else{if(object.properties.__key !== hovering) setHovering(object.properties.__key);}
-					}}
-					getCursor={({isDragging}) => isDragging ? "grabbing" : (hovering ? "pointer" : "default")}
-					style={{
-						top: 50,
-						height: "calc(100% - 50px)",
-					}}
-				/>
 			</div>
 		</>
 	);
@@ -343,12 +339,20 @@ export function getServerSideProps({params}){
 			return {
 					props: {
 							error: true,
-							errorMessage: "Quiz not found"
+							errorMessage: "quiz not found"
 					}
 			};
 		}
 
 		let geoJSONs = getGeoJSONFromCategory(quizDetails.categoryId, quizDetails.categoryUser, quizDetails.displayValues);
+		if(geoJSONs.length === 0){
+			return {
+					props: {
+							error: true,
+							errorMessage: "quiz has no questions"
+					}
+			};
+		}
 		geoJSONs = geoJSONs.map(x => {
 			x.shape = JSON.parse(x.shape);
 			const hash = crypto.createHash('sha256');
@@ -379,5 +383,3 @@ export function getServerSideProps({params}){
 				}
 		};
 }
-
-MapQuizPage.getLayout = page => page;
