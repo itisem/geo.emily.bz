@@ -1,0 +1,18 @@
+.favourites{
+	margin: 0 auto;
+}
+.favouritescontainer{
+	display: grid;
+	grid-gap: 0.25em;
+	grid-auto-flow: dense;
+	grid-template-columns: repeat(auto-fill, 300px);
+}
+.favouritebox{
+	background: rgba(0, 0, 0, 0.2);
+	width: 300px;
+	border-radius: 30px;
+	text-align: center;
+}
+.unfavourite{
+	cursor: pointer;
+}

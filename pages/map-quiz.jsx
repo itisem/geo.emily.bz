@@ -2,6 +2,11 @@ import Database from "better-sqlite3";
 import * as appRoot from "app-root-path";
 import Head from "next/head";
 
+import FavouriteQuizzes from "/components/favourite-quizzes";
+
+import checkSession from "/utils/db/check-session";
+import getFavouriteQuizzes from "/utils/db/get-favourite-quizzes";
+
 function CountryContainer({quizzes, category}){
 	return (
 		<section key={category}>
@@ -13,30 +18,40 @@ function CountryContainer({quizzes, category}){
 	);
 }
 
-export default function MapQuiz({quizzes}){
+export default function MapQuiz({quizzes, favouriteQuizzes}){
 	return (
 		<>
 			<Head>
 				<title>map quizzes</title>
 			</Head>
 			<h1>map quizzes</h1>
-			<main 
-				id="quizzes"
+			<FavouriteQuizzes quizzes={favouriteQuizzes} />
+			<h2>highlighted quizzes</h2>
+			<section 
+				id="all-quizzes"
 				style={{
 					display: "grid",
 					gridGap: "0.25em",
-					gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-					gridAutoFlow: "dense"
+					gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+					gridAutoFlow: "dense",
 				}}
 			>
 				{Object.keys(quizzes).map(category => <CountryContainer quizzes={quizzes[category]} category={category} key={category} />)}
-			</main>
+			</section>
 		</>
 	);
 }
 
 
-export function getStaticProps(){
+export function getServerSideProps(context){
+	let favourites;
+	try{
+		const sessionInfo = checkSession(context.req.cookies.sessionId);
+		favourites = getFavouriteQuizzes(sessionInfo.user.id);
+	}
+	catch(e){
+		favourites = [];
+	}
 	const db = new Database(`${appRoot}/data/data.db`);
 	const quizzes = db.prepare(`
 		SELECT alias, altTitle, name, emoji, isCountry
@@ -54,7 +69,8 @@ export function getStaticProps(){
 	}
 	return {
 		props: {
-			quizzes: quizzesByCategory
+			quizzes: quizzesByCategory,
+			favouriteQuizzes: favourites
 		}
 	}
 }

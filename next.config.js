@@ -5,8 +5,8 @@ export default {
 	async redirects() {
 		return [
 			{
-				source: '/fix_ari',
-				destination: '/pano-tools',
+				source: '/user/logout',
+				destination: '/api/user/logout',
 				permanent: true,
 			},
 		]
