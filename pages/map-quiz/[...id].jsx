@@ -81,25 +81,19 @@ export default function MapQuizPage(props){
 	const changeTries = (e) => setMaxTries(e.target.value);
 	const changeDisplayBorders = (e) => setDisplayBorders(e.target.checked);
 
-	const checkAnswer = useCallback((jsonKey) => {
+	const checkAnswer = useCallback((layerKey, jsonKey) => {
 		if(quiz.questions.length === 0) return;
-		const isCorrect = quiz.checkAnswer(jsonKey);
-		if(quiz.correctness[jsonKey] !== 0 && !isCorrect) return; // already answered, not the correct question
-		if(roundWrong.length < maxTries){
-			if(!roundWrong.includes(jsonKey)){
-				quiz.setCorrectness(isCorrect);
-			}
-			if(!isCorrect){
-				setRoundWrong([...roundWrong, jsonKey]);
-			}
+		if(layerKey == "correct" || layerKey == "wrong") return;
+		const isCorrect = quiz.checkAnswer(jsonKey, roundWrong.length < maxTries);
+		if(!isCorrect){
+			setRoundWrong([...roundWrong, jsonKey]);
 		}
-		if(isCorrect){
+		if(isCorrect || !forceClick){
 			setRoundWrong([]);
 			setCurrentQuestion(quiz.nextQuestion());
 		}
 		if(quiz.questions.length == 0){
-			setTimeDiff(prettyMs(new Date().getTime() - startTime, {secondsDecimalDigits: 0, verbose: true}));
-			setVisibleMenu("game-over");
+			setMapVisible(false);
 		}
 	}, [forceClick, currentQuestion, roundWrong])
 
@@ -120,7 +114,7 @@ export default function MapQuizPage(props){
 		setStartTime(new Date().getTime());
 	}
 
-	const getColour = key => {
+	const getColour = useCallback(key => {
 		if(roundWrong.includes(key)) return correctnessStyles.roundWrong;
 		if(quiz.currentQuestionId === key && roundWrong.length >= maxTries) return correctnessStyles.force;
 		switch(quiz.correctness[key]){
@@ -131,22 +125,72 @@ export default function MapQuizPage(props){
 			case 1:
 				return correctnessStyles.correct;
 		}
+	}, [forceClick, currentQuestion, roundWrong]);
+
+	const getGeoJSONLayers = () => {
+		let layers = {
+			"current": [],
+			"wrong": [],
+			"unselected": [],
+			"correct": [],
+			"roundWrong": [],
+			"hovering": []
+		};
+		if(!quiz.correctness){ // ensures that un-initialised quizzes work
+			props.geoJSONs.map(x => layers.current.push(x));
+			return layers;
+		}
+		for(let geo of props.geoJSONs){
+			if(geo.key == hovering){
+				layers.hovering.push(geo);
+			}
+			if(geo.key == quiz.currentQuestionId){
+				layers.current.push(geo);
+			}
+			else{
+				if(roundWrong.includes(geo.key) && roundWrong.length < maxTries){
+					layers.roundWrong.push(geo);
+				}
+				else{
+					switch(quiz.correctness[geo.key]){
+						case -1:
+							layers.wrong.push(geo);
+							break;
+						case 0:
+							layers.unselected.push(geo);
+							break;
+						case 1:
+							layers.correct.push(geo);
+							break;
+					}
+				}
+			}
+		}
+		return [
+			createGeoJSON("wrong", layers.wrong, correctnessStyles.wrong),
+			createGeoJSON("correct", layers.correct, correctnessStyles.correct),
+			createGeoJSON("unselected", layers.unselected, correctnessStyles.unselected),
+			createGeoJSON("roundWrong", layers.roundWrong, correctnessStyles.roundWrong),
+			createGeoJSON("current", layers.current, roundWrong.length >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
+		];
 	}
 
-	const jsonLayer = new GeoJsonLayer({
-		id: "geojsons",
-		data: props.geoJSONs.map(geoJSON => geoJSON.shape),
-		getFillColor: (x) => [...getColour(x.properties.__key), 100],
+	const createGeoJSON = (id, jsons, colour, pickable = true) => {return new GeoJsonLayer({
+		id: id,
+		data: jsons.map(geoJSON => geoJSON.shape),
+		getFillColor: [...colour, 100],
 		stroked: displayBorders,
-		getLineColor: (x) => [...getColour(x.properties.__key), 255],
+		getLineColor: [...colour, 255],
 		getLineWidth: 2,
 		lineWidthUnits: "pixels",
-		pickable: true,
-		onClick: (e) => checkAnswer(e.object.properties.__key)
-	});
+		pickable,
+		onClick: (e) => checkAnswer(id, e.object.properties.__key)
+	})};
 
+	const [questionLayers, setQuestionLayers] = useState(getGeoJSONLayers());
 	const [hoveringLayer, setHoveringLayer] = useState(null);
 
+	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
 
 	const refreshHovering = () => displayBorders && visibleMenu !== "game-over" ?
 		setHoveringLayer(new GeoJsonLayer({
@@ -161,6 +205,7 @@ export default function MapQuizPage(props){
 		})) :
 		setHoveringLayer([]);
 
+	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
 	useEffect(() => refreshHovering(), [hovering]);
 
 	useEffect(() => {
@@ -177,7 +222,7 @@ export default function MapQuizPage(props){
 				controller={visibleMenu !== "game-over"}
 				initialViewState={viewState}
 				views={new MapView({repeat:true})}
-				layers={[MapTiles(mapType), jsonLayer, hoveringLayer]}
+				layers={[MapTiles(mapType), ...questionLayers, hoveringLayer]}
 				effects={visibleMenu === "game-over" ? [new PostProcessEffect(triangleBlur,{radius: 5})] : []}
 				repeat={true}
 				onHover={({object}) => {
