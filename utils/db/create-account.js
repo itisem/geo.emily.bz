@@ -15,7 +15,7 @@ export default function createAccount(username, password, settings = {}){
 	const validPassword = passwordChecks.map(check => !password.match(check)).every(x => x);
 	if(!validPassword) return Promise.reject("INVALID_PASSWORD");
 
-	const id = crypto.randomUUID({disableEntropyCache: true});
+	const id = crypto.randomUUID();
 	const saltRounds = 10;
 	return bcrypt.hash(password, saltRounds).then(hash =>{
 		db.prepare("INSERT INTO users (id, displayName, password) VALUES (:id, :username, :password)").run({id: id, username: username, password: hash});

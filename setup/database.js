@@ -139,7 +139,7 @@ const structureQueries = [
 					perms.push(oldPermissions[num]);
 				}
 			}
-			return perms.join(",");
+			return perms.join("\x1d");
 		}
 		db.prepare(`ALTER TABLE sessions RENAME COLUMN sessionKey to sessionId`).run();
 		const permissions = db.prepare(`SELECT id, permissions FROM users`).all();

@@ -10,7 +10,7 @@ export default function checkSession(sessionId, refreshSession = true){
 		throw "SESSION_EXPIRED";
 	}
 	if(refreshSession){
-		const sessionDuration = +process.env.SESSION_DURATION || 1000*60*60*24;
+		const sessionDuration = +process.env.SESSION_DURATION || 1000*60*60*24*14;
 		session.expiry = Date.now() + sessionDuration;
 		db.prepare(`UPDATE sessions SET expiry = :expiry WHERE sessionId = :sessionId`).run({sessionId: sessionId, expiry: session.expiry});
 	}

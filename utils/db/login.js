@@ -4,14 +4,14 @@ import * as crypto from "crypto";
 import * as bcrypt from "bcrypt";
 
 export default function login(username, password, settings = {}){
-	const sessionDuration = +process.env.SESSION_DURATION || 1000*60*60*24;
+	const sessionDuration = +process.env.SESSION_DURATION || 1000*60*60*24*14;
 	const db = openDB();
 	if(!validateUsername(username, settings)) return Promise.reject("INVALID_USERNAME");
 	const userData = db.prepare("SELECT * FROM users WHERE LOWER(displayName) = ?").get([username.toLowerCase()]);
 	if(!userData) return Promise.reject("USERNAME_DOES_NOT_EXIST");
 	return bcrypt.compare(password, userData.password).then(result => {
 		if(!result) return Promise.reject("INCORRECT_PASSWORD");
-		const sessionId = crypto.randomUUID({disableEntropyCache: true});
+		const sessionId = crypto.randomBytes(32).toString("base64");
 		const expiry = Date.now() + sessionDuration;
 		db.prepare("INSERT INTO sessions(sessionId, userId, expiry) VALUES (:sessionId, :userId, :expiry)").run({
 			sessionId: sessionId,
@@ -24,7 +24,7 @@ export default function login(username, password, settings = {}){
 				id: userData.id,
 				displayName: userData.displayName
 			},
-			expiry: expiry
+			duration: sessionDuration
 		};
 	});
 }
