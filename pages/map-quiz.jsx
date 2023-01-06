@@ -17,9 +17,9 @@ export default function MapQuiz({quizzes}){
 	return (
 		<>
 			<Head>
-				<title>Map quizzes</title>
+				<title>map quizzes</title>
 			</Head>
-			<h1>Map quizzes</h1>
+			<h1>map quizzes</h1>
 			<main 
 				id="quizzes"
 				style={{

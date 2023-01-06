@@ -40,6 +40,8 @@ body{
 	background-attachment: fixed;
 	color: var(--text);
 	font-family: "PT Serif";
+	margin: 0;
+	padding: 0;
 }
 
 h1, h2, h3, h4, h5, h6, input, button, .button-group label{
@@ -47,8 +49,9 @@ h1, h2, h3, h4, h5, h6, input, button, .button-group label{
 }
 
 .container{
-	max-width: 1500px;
+	max-width: 1200px;
 	margin: 0 auto;
+	padding: 0;
 }
 
 h1{
@@ -65,18 +68,11 @@ a:hover{
 }
 
 .centered{
-	display: flex;
-	justify-content: center;
+	text-align: center;
 }
 
 input[type=file]{
 	margin-left: 5px;
-}
-
-menu{
-	list-style-type: none;
-	display: flex;
-	gap: 0.7em;
 }
 
 summary{
