@@ -3,15 +3,19 @@
 }
 .favouritescontainer{
 	display: grid;
-	grid-gap: 0.25em;
+	grid-gap: 10px;
 	grid-auto-flow: dense;
-	grid-template-columns: repeat(auto-fill, 300px);
+	grid-template-columns: repeat(auto-fill, 290px);
 }
 .favouritebox{
 	background: rgba(0, 0, 0, 0.2);
-	width: 300px;
+	width: 270px;
 	border-radius: 30px;
 	text-align: center;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	padding: 5px 10px;
 }
 .unfavourite{
 	cursor: pointer;

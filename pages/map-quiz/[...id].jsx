@@ -119,19 +119,6 @@ export default function MapQuizPage(props){
 		setStartTime(new Date().getTime());
 	}
 
-	const getColour = useCallback(key => {
-		if(roundWrong.includes(key)) return correctnessStyles.roundWrong;
-		if(quiz.currentQuestionId === key && roundWrong.length >= maxTries) return correctnessStyles.force;
-		switch(quiz.correctness[key]){
-			case -1:
-				return correctnessStyles.wrong;
-			case 0:
-				return correctnessStyles.unselected;
-			case 1:
-				return correctnessStyles.correct;
-		}
-	}, [forceClick, currentQuestion, roundWrong]);
-
 	const getGeoJSONLayers = () => {
 		let layers = {
 			"current": [],
@@ -216,7 +203,7 @@ export default function MapQuizPage(props){
 	useEffect(() => {
 		quiz.randomiseQuestions(); // moved here to avoid hydration errors
 		setCurrentQuestion(quiz.currentQuestionHTML);
-		setViewState(getViewStateFromBounds(props.bbox, window.innerWidth, window.innerHeight - 200));
+		setViewState(getViewStateFromBounds(props.bbox, window.innerWidth, window.innerHeight - 40));
 		setStartTime(new Date().getTime());
 	}, []);
 
@@ -251,7 +238,7 @@ export default function MapQuizPage(props){
 					top: "60px",
 					left: "50%",
 					transform: "translateX(-50%)",
-					zIndex: "98",
+					zIndex: "1",
 					padding: 0,
 					margin: 0,
 					paddingTop: "5px",
@@ -267,7 +254,7 @@ export default function MapQuizPage(props){
 			>
 				<div id="question" dangerouslySetInnerHTML={{__html: currentQuestion}}></div>
 				<div id="skip-button" style={{textAlign: "center"}}>
-					<Button id="skip" onClick={skipQuestion}>Skip</Button>
+					<Button id="skip" onClick={skipQuestion}>Next →</Button>
 					<Button id="restart" onClick={restartQuiz}>Restart</Button>
 				</div>
 			</div>
@@ -305,6 +292,7 @@ export default function MapQuizPage(props){
 							else setVisibleMenu("");
 						}
 					}
+					title = "settings"
 				>
 					⚙️
 				</Button>
@@ -317,7 +305,7 @@ export default function MapQuizPage(props){
 					right: "10px",
 					top: "110px",
 					textAlign: "right",
-					zIndex: "99",
+					zIndex: "2",
 					background: "var(--bglight)",
 					borderRadius: "10px",
 					padding: "10px",

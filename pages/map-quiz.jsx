@@ -9,8 +9,16 @@ import getFavouriteQuizzes from "/utils/db/get-favourite-quizzes";
 
 function CountryContainer({quizzes, category}){
 	return (
-		<section key={category}>
-			<h2 style={{textAlign: "center", fontFamily: "TwemojiFlags, Manrope"}}>{quizzes[0].emoji} {category}</h2>
+		<section key={category} style={{borderRadius: 30, background: "rgb(0,0,0,0.1)"}}>
+			<h2 style={{
+				textAlign: "center",
+				fontFamily: "TwemojiFlags, Manrope",
+				background: "rgb(0,0,0,0.2)",
+				borderRadius: "30px 30px 0px 0px",
+				marginTop: 0
+			}}>
+				{quizzes[0].emoji} {category}
+			</h2>
 			<ul>
 				{quizzes.map(quiz => <li key={quiz.alias}><a href={"/map-quiz/" + quiz.alias}>{quiz.altTitle}</a></li>)}
 			</ul>
@@ -31,8 +39,8 @@ export default function MapQuiz({quizzes, favouriteQuizzes}){
 				id="all-quizzes"
 				style={{
 					display: "grid",
-					gridGap: "0.25em",
-					gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+					gridGap: "10px",
+					gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
 					gridAutoFlow: "dense",
 				}}
 			>

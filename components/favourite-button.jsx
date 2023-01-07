@@ -21,6 +21,7 @@ export default function FavouriteButton({isLoggedIn, isFavourited, quizId, creat
 					}
 				}
 			}
+			title = {favourited ? "remove favourite" : "add favourite"}
 		>
 			{favourited ? "★": "☆"}
 		</Button>
