@@ -2,7 +2,7 @@ import styles from "./favourite-quizzes.module.css";
 import QuizContainer from "./quiz-container";
 import {useState} from "react";
 
-export default function FavouriteQuizzes({quizzes, includeButton}){
+export default function FavouriteQuizzes({quizzes}){
 	let [favs, setFavs] = useState(quizzes);
 
 	const unfavourite = (id, creator) => {
