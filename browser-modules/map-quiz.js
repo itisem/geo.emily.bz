@@ -4,7 +4,7 @@ export default class MapQuiz{
 		this.totalCorrect = 0;
 		this.questionObj = {};
 		this.correctness = {};
-		for(let location of props.geoJSONs){
+		for(let location of props.geoJSONs.flat()){
 			this.questionObj[location.key] = this.questionMap(location, props.displayValues);
 			this.correctness[location.key] = 0;
 		}
@@ -58,12 +58,12 @@ export default class MapQuiz{
 	}
 
 	checkAnswer(answer, setCorrectness = true){
-		const isCorrect = answer === this.questionOrder[0];
-		if(setCorrectness){
-			this.correctness[this.questionOrder[0]] = 2 * isCorrect - 1;
-			this.totalCorrect += isCorrect;
-		}
-		return isCorrect;
+		return answer === this.questionOrder[0];
+	}
+
+	setCorrectness(isCorrect){
+		this.correctness[this.questionOrder[0]] = 2 * isCorrect - 1;
+		this.totalCorrect += isCorrect;
 	}
 
 	transformValue(q){

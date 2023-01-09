@@ -17,7 +17,7 @@ import {GeoJsonLayer} from '@deck.gl/layers';
 import {PostProcessEffect, MapView} from '@deck.gl/core';
 import {triangleBlur} from '@luma.gl/shadertools';
 
-import {useState, useEffect, useCallback} from 'react';
+import {useState, useEffect, useCallback, useMemo} from 'react';
 import Head from "next/head";
 
 import SelectorButtonGroup from "/components/selector-button-group";
@@ -66,9 +66,10 @@ export default function MapQuizPage(props){
 		return (<ErrorPage errorMessage={props.errorMessage} />)
 	}
 	const totalQuestions = props.geoJSONs.length;
+	const shapes = useMemo(() => props.geoJSONs.map(x => x.shape), []);
 
 	const [viewState, setViewState] = useState(getViewStateFromBounds(props.bbox, 1920, 1080)); //avoids hydration errors since window.innerWidth only works in the browser
-	const [quiz, setQuiz] = useState(new MapQuiz(props));
+	const quiz = useMemo(() => new MapQuiz(props), []);
 
 	const [mapType, setMapType] = useState(props.defaultMap);
 	const [visibleMenu, setVisibleMenu] = useState("");
@@ -85,12 +86,14 @@ export default function MapQuizPage(props){
 	const changeTries = (e) => setMaxTries(e.target.value);
 	const changeDisplayBorders = (e) => setDisplayBorders(e.target.checked);
 
-	const checkAnswer = useCallback((layerKey, jsonKey) => {
+	const checkAnswer = useCallback((jsonKey) => {
 		if(quiz.questions.length === 0) return;
-		if(layerKey == "correct" || layerKey == "wrong") return;
-		const isCorrect = quiz.checkAnswer(jsonKey, roundWrong.length < maxTries);
-		if(!isCorrect){
-			setRoundWrong([...roundWrong, jsonKey]);
+		const isCorrect = quiz.checkAnswer(jsonKey);
+		if(roundWrong.length < maxTries){
+			quiz.setCorrectness(isCorrect);
+			if(!isCorrect){
+				setRoundWrong([...roundWrong, jsonKey]);
+			}
 		}
 		if(isCorrect || !forceClick){
 			setRoundWrong([]);
@@ -167,22 +170,36 @@ export default function MapQuizPage(props){
 		];
 	}
 
-	const createGeoJSON = (id, jsons, colour, pickable = true) => {return new GeoJsonLayer({
-		id: id,
-		data: jsons.map(geoJSON => geoJSON.shape),
-		getFillColor: [...colour, 100],
+	const getColour = (key) => {
+		if(key === quiz.currentQuestionId){
+			if(roundWrong.length < maxTries) return correctnessStyles.unselected;
+			return correctnessStyles.force;
+		}
+		if(roundWrong.includes(key)) return correctnessStyles.roundWrong;
+		switch(quiz.correctness[key]){
+			case -1: return correctnessStyles.wrong;
+			case 0: return correctnessStyles.unselected;
+			case 1: return correctnessStyles.correct;
+		}
+	}
+
+	const questionLayer = new GeoJsonLayer({
+		id: "questions",
+		data: shapes,
+		getFillColor: (x => [...getColour(x.properties.__key), 100]),
 		stroked: displayBorders,
-		getLineColor: [...colour, 255],
+		getLineColor: (x => [...getColour(x.properties.__key), displayBorders ? 255 : 0]),
 		getLineWidth: 2,
 		lineWidthUnits: "pixels",
-		pickable,
-		onClick: (e) => checkAnswer(id, e.object.properties.__key)
-	})};
+		pickable: true,
+		updateTriggers: {
+			getFillColor: [roundWrong, currentQuestion],
+			getLineColor: [roundWrong, currentQuestion, displayBorders]
+		},
+		onClick: (e) => checkAnswer(e.object.properties.__key)
+	});
 
-	const [questionLayers, setQuestionLayers] = useState(getGeoJSONLayers());
 	const [hoveringLayer, setHoveringLayer] = useState(null);
-
-	const refreshQuestions = () => setQuestionLayers(getGeoJSONLayers());
 
 	const refreshHovering = () => displayBorders && visibleMenu !== "game-over" ?
 		setHoveringLayer(new GeoJsonLayer({
@@ -197,7 +214,6 @@ export default function MapQuizPage(props){
 		})) :
 		setHoveringLayer([]);
 
-	useEffect(() => refreshQuestions(), [roundWrong, currentQuestion, displayBorders, forceClick]);
 	useEffect(() => refreshHovering(), [hovering]);
 
 	useEffect(() => {
@@ -214,7 +230,7 @@ export default function MapQuizPage(props){
 				controller={visibleMenu !== "game-over"}
 				initialViewState={viewState}
 				views={new MapView({repeat:true})}
-				layers={[MapTiles(mapType), ...questionLayers, hoveringLayer]}
+				layers={[MapTiles(mapType), questionLayer, hoveringLayer]}
 				effects={visibleMenu === "game-over" ? [new PostProcessEffect(triangleBlur,{radius: 5})] : []}
 				repeat={true}
 				onHover={({object}) => {
