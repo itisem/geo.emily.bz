@@ -1,0 +1,19 @@
+.quizzes{
+	margin: 0 auto;
+}
+.quizcontainer{
+	display: grid;
+	grid-gap: 10px;
+	grid-auto-flow: dense;
+	grid-template-columns: repeat(auto-fill, 290px);
+}
+.quizbox{
+	background: rgba(0, 0, 0, 0.2);
+	width: 270px;
+	border-radius: 30px;
+	text-align: center;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	padding: 5px 10px;
+}

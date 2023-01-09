@@ -1,7 +1,8 @@
 import styles from "./favourite-quizzes.module.css";
+import QuizContainer from "./quiz-container";
 import {useState} from "react";
 
-export default function FavouriteQuizzes({quizzes}){
+export default function FavouriteQuizzes({quizzes, includeButton}){
 	let [favs, setFavs] = useState(quizzes);
 
 	const unfavourite = (id, creator) => {
@@ -10,17 +11,11 @@ export default function FavouriteQuizzes({quizzes}){
 
 	if(favs.length === 0) return (<></>);
 	return (
-		<section className={styles.favourites}>
-			<h2>your favourite quizzes</h2>
-			<div className={styles.favouritescontainer}>
-				{favs.map(quiz => 
-					<div className={styles.favouritebox}>
-						<b><a href={`map-quiz/@${quiz.user.displayName}/${quiz.id}`}>{quiz.title}</a></b> <br/>
-						by {quiz.user.displayName} <br />
-						<a onClick={() => unfavourite(quiz.id, quiz.user.id)} className={styles.unfavourite}>remove</a>
-					</div>
-				)}
-			</div>
-		</section>
+		<QuizContainer quizzes={favs} quizInfo = {quiz => (
+			<>
+				by {quiz.user.displayName}<br />
+				<a onClick={() => unfavourite(quiz.id, quiz.user.id)} className={styles.unfavourite}>remove</a>
+			</>
+		)} />
 	);
 }

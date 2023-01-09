@@ -7,7 +7,8 @@ import FavouriteQuizzes from "/components/favourite-quizzes";
 import checkSession from "/utils/db/check-session";
 import getFavouriteQuizzes from "/utils/db/get-favourite-quizzes";
 
-function CountryContainer({quizzes, category}){
+function CountryContainer({quizzes, category, categoryInfo}){
+	const linkMore = !quizzes.every(x => x.isFrontPage);
 	return (
 		<section key={category} style={{borderRadius: 30, background: "rgb(0,0,0,0.1)"}}>
 			<h2 style={{
@@ -17,23 +18,28 @@ function CountryContainer({quizzes, category}){
 				borderRadius: "30px 30px 0px 0px",
 				marginTop: 0
 			}}>
-				{quizzes[0].emoji} {category}
+				{categoryInfo.emoji} {categoryInfo.name}
 			</h2>
 			<ul>
-				{quizzes.map(quiz => <li key={quiz.alias}><a href={"/map-quiz/" + quiz.alias}>{quiz.altTitle}</a></li>)}
+				{quizzes.map(quiz => {
+					if(quiz.isFrontPage){
+						return (<li key={quiz.alias}><a href={"/map-quiz/" + quiz.alias}>{quiz.altTitle}</a></li>)
+					}
+				})}
 			</ul>
+			{linkMore ? <p className="centered"><a href={`/map-quiz/${category}`}>more quizzes</a></p> : ""}
 		</section>
 	);
 }
 
-export default function MapQuiz({quizzes, favouriteQuizzes}){
+export default function MapQuiz({quizzes, favouriteQuizzes, categoryInfo}){
 	return (
 		<>
 			<Head>
 				<title>map quizzes</title>
 			</Head>
 			<h1>map quizzes</h1>
-			<FavouriteQuizzes quizzes={favouriteQuizzes} />
+			<FavouriteQuizzes quizzes={favouriteQuizzes} includeButton={true} />
 			<h2>highlighted quizzes</h2>
 			<section 
 				id="all-quizzes"
@@ -44,7 +50,7 @@ export default function MapQuiz({quizzes, favouriteQuizzes}){
 					gridAutoFlow: "dense",
 				}}
 			>
-				{Object.keys(quizzes).map(category => <CountryContainer quizzes={quizzes[category]} category={category} key={category} />)}
+				{Object.keys(quizzes).map(category => <CountryContainer quizzes={quizzes[category]} category={category} categoryInfo={categoryInfo[category]} key={category} />)}
 			</section>
 		</>
 	);
@@ -60,25 +66,35 @@ export function getServerSideProps(context){
 	catch(e){
 		favourites = [];
 	}
+	favourites = favourites.map(x => {x.url = `@${x.user.displayName}/${x.id}`; return x;});
 	const db = new Database(`${appRoot}/data/data.db`);
 	const quizzes = db.prepare(`
-		SELECT alias, altTitle, name, emoji, isCountry
+		SELECT alias, altTitle, name, emoji, isCountry, isFrontPage, quizCategories.category
 		FROM quizAliases INNER JOIN quizCategories ON quizAliases.category = quizCategories.category
-		WHERE isFrontPage = 1
 		ORDER BY name ASC
 	`).all();
 	let quizzesByCategory = {};
+	let categoryInfo = {};
 	for(let quiz of quizzes){
-		const category = quiz.name;
-		if(!quizzesByCategory[category]){
-			quizzesByCategory[category] = [];
+		if(!quizzesByCategory[quiz.category]){
+			quizzesByCategory[quiz.category] = [];
+			categoryInfo[quiz.category] = {
+				emoji: quiz.emoji,
+				name: quiz.name,
+				isCountry: quiz.isCountry
+			}
 		}
-		quizzesByCategory[category].push(quiz);
+		quizzesByCategory[quiz.category].push({
+			alias: quiz.alias,
+			altTitle: quiz.altTitle,
+			isFrontPage: quiz.isFrontPage,
+		});
 	}
 	return {
 		props: {
 			quizzes: quizzesByCategory,
-			favouriteQuizzes: favourites
+			favouriteQuizzes: favourites,
+			categoryInfo: categoryInfo
 		}
 	}
 }
