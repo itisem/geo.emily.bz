@@ -11,11 +11,14 @@ export default function FavouriteQuizzes({quizzes, includeButton}){
 
 	if(favs.length === 0) return (<></>);
 	return (
-		<QuizContainer quizzes={favs} quizInfo = {quiz => (
-			<>
-				by {quiz.user.displayName}<br />
-				<a onClick={() => unfavourite(quiz.id, quiz.user.id)} className={styles.unfavourite}>remove</a>
-			</>
-		)} />
+		<>
+			<h2>your favourite quizzes</h2>
+			<QuizContainer quizzes={favs} quizInfo = {quiz => (
+				<>
+					by {quiz.user.displayName}<br />
+					<a onClick={() => unfavourite(quiz.id, quiz.user.id)} className={styles.unfavourite}>remove</a>
+				</>
+			)} />
+		</>
 	);
 }

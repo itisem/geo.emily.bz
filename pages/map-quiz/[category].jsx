@@ -1,5 +1,6 @@
 import getUserQuizzes from "/utils/db/get-user-quizzes";
 import getCategoryQuizzes from "/utils/db/get-category-quizzes";
+import getCategoryInfo from "/utils/db/get-category-info";
 import Head from "next/head";
 import QuizContainer from "/components/quiz-container";
 
@@ -44,6 +45,8 @@ export function getServerSideProps({params}){
 			x.url = x.alias;
 			return x;
 		});
+		const categoryInfo = getCategoryInfo(category);
+		category = `${categoryInfo.emoji} ${categoryInfo.name}`;
 	}
 	return{
 		props: {
