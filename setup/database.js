@@ -191,6 +191,14 @@ const structureQueries = [
 			addedAt INTEGER DEFAULT 0 NOT NULL
 			UNIQUE(id, creator, user)
 		)`)
+	},
+	function playTable(db){
+		db.prepare(`CREATE TABLE IF NOT EXISTS quizPlays(
+			id TEXT NOT NULL,
+			creator TEXT NOT NULL,
+			player TEXT,
+			playedAt INTEGER DEFAULT 0 NOT NULL
+		)`);
 	}
 ]; // adding / removing columns should be done by a new query here to ensure database is versioned correctly
 

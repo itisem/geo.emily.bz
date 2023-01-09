@@ -2,9 +2,9 @@ import openDB from "./open-db";
 
 export default function checkSession(sessionId, refreshSession = true){
 	const db = openDB();
-	if(!sessionId) throw "NO_SESSION";
+	if(!sessionId) throw "no session";
 	let session = db.prepare(`SELECT * FROM sessions INNER JOIN users ON sessions.userId = users.id WHERE sessionId = ?`).get(sessionId);
-	if(!session) throw "SESSION_NOT_FOUND";
+	if(!session) throw "session not found";
 	if(session.expiry < Date.now()){
 		db.prepare(`DELETE FROM sessions WHERE sessionId = ?`).run(sessionId);
 		throw "SESSION_EXPIRED";

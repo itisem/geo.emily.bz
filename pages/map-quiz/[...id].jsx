@@ -102,6 +102,7 @@ export default function MapQuizPage(props){
 		if(quiz.questions.length == 0){
 			setTimeDiff(prettyMs(new Date().getTime() - startTime, {verbose: true, secondsDecimalDigits: 0}));
 			setVisibleMenu("game-over");
+			fetch(`/api/log-quiz-completion/${props.creatorId}/${props.quizId}`);
 		}
 	}, [forceClick, currentQuestion, roundWrong])
 

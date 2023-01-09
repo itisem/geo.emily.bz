@@ -5,7 +5,14 @@ import checkSession from "/utils/db/check-session";
 
 export default function modifyFavourite(req, res){
 	const db = new Database(`${appRoot}/data/data.db`);
-	const sessionInfo = checkSession(req.cookies.sessionId);
+	let sessionInfo;
+	try{
+		sessionInfo = checkSession(req.cookies.sessionId);
+	}
+	catch{
+		res.status(400).json([]);
+		return;
+	}
 	const {id, creator} = req.query;
 	const user = sessionInfo.user.id;
 	const addedAt = new Date().getTime();

@@ -1,14 +1,24 @@
 import checkSession from "/utils/db/check-session";
 import getUserQuizzes from "/utils/db/get-user-quizzes";
+import getFavouriteQuizzes from "/utils/db/get-favourite-quizzes";
+import getQuizPlayers from "/utils/db/get-quiz-players";
 import Button from "/components/button";
 import QuizContainer from "/components/quiz-container";
+import FavouriteQuizzes from "/components/favourite-quizzes";
 import ErrorPage from "/components/error-page";
 
 export default function Me(props){
 	if(props.error){
 		return (<ErrorPage errorMessage={props.errorMessage} />);
 	}
-	const quizzes = <><h2>your quizzes</h2><QuizContainer quizzes={props.quizzes} quizInfo={() => ""} /></>
+	const playInfo = id => {if(!props.players[id]) return {players: 0, plays: 0}; return props.players[id];}
+	const quizzes = <>
+		<h2>your quizzes</h2>
+		<QuizContainer
+			quizzes={props.quizzes}
+			quizInfo={quiz => (<i>{playInfo(quiz.id).players} players, {playInfo(quiz.id).plays} plays</i>)}
+		/>
+	</>;
 	return (<>
 		<h1>your profile</h1>
 		<section id="user-info" className="centered">
@@ -17,6 +27,7 @@ export default function Me(props){
 			<p><Button onClick={() => window.location.replace("/user/logout")}>log out</Button></p>
 		</section>
 		{props.quizzes.length > 0 ? quizzes : ""}
+		<FavouriteQuizzes quizzes={props.favourites} />
 	</>);
 }
 
@@ -36,11 +47,15 @@ export function getServerSideProps(context){
 			x.url = x.frontpageURL || `@${x.displayName}/${x.id}`;
 			return x;
 		});
+		const favourites = getFavouriteQuizzes(sessionInfo.user.id);
+		const players = getQuizPlayers(sessionInfo.user.id);
 		return {
 			props: {
 				error: false,
 				message: sessionInfo,
-				quizzes: quizzes
+				quizzes,
+				favourites,
+				players
 			}
 		}
 	}
