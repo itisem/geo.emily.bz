@@ -52,6 +52,15 @@ export default class MapQuiz{
 		return this.nextQuestion();
 	}
 
+	prevQuestion(setWrong){
+		if(setWrong){
+			this.setCorrectness(false);
+			this.questionOrder.shift();
+		}
+		this.questionOrder = [this.questionOrder[this.questionOrder.length - 1], ...this.questionOrder.slice(0, -1)];
+		return this.currentQuestionHTML;
+	}
+
 	nextQuestion(){
 		this.questionOrder.shift();
 		return this.currentQuestionHTML;

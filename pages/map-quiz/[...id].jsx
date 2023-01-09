@@ -111,6 +111,11 @@ export default function MapQuizPage(props){
 		setRoundWrong([]);
 	}
 
+	const prevQuestion = () => {
+		setCurrentQuestion(quiz.prevQuestion(roundWrong.length !== 0));
+		setRoundWrong([]);
+	}
+
 
 	const restartQuiz = () => {
 		if(visibleMenu){
@@ -270,6 +275,7 @@ export default function MapQuizPage(props){
 			>
 				<div id="question" dangerouslySetInnerHTML={{__html: currentQuestion}}></div>
 				<div id="skip-button" style={{textAlign: "center"}}>
+					<Button id="skip" onClick={prevQuestion}>Prev ←</Button>
 					<Button id="skip" onClick={skipQuestion}>Next →</Button>
 					<Button id="restart" onClick={restartQuiz}>Restart</Button>
 				</div>
