@@ -1,10 +1,9 @@
 import Head from "next/head";
 import Button from "/components/button";
 import SelectorButtonGroup from "/components/selector-button-group";
-import Database from "better-sqlite3";
-import * as appRoot from "app-root-path";
+import openDB from "/utils/db/open-db";
 import {useEffect, useState, useCallback} from 'react';
-import WritingGame from '/browser-modules/writing-game';
+import WritingGame from '/utils/writing-systems/game';
 
 const game = new WritingGame(process.env.NEXT_PUBLIC_GOOGLE_API_KEY);
 
@@ -17,10 +16,21 @@ export default function WritingSystems({languages}){
 		};
 	});
 
+	let [reportInfo, setReportInfo] = useState({language: "ru", englishName: "", localName: ""});
 	let [question, setQuestion] = useState("");
 	let [answerText, setAnswerText] = useState("");
 	let [correctness, setCorrectness] = useState(true);
 	let [currentGuess, setCurrentGuess] = useState("");
+	let [hasTTS, setHasTTS] = useState(true);
+	let [isReported, setIsReported] = useState(false);
+	let [freshWords, setFreshWords] = useState(true);
+
+	const report = () => {
+		setIsReported(true);
+		fetch("/api/writing-systems/report?" + new URLSearchParams(reportInfo));
+	}
+
+	const reportButton = isReported ? <b>question reported</b> : <a onClick={report} style={{cursor: "pointer"}}>report incorrect question</a>;
 
 	const guess = useCallback(() => {
 		if(game.validate(currentGuess)){
@@ -38,14 +48,25 @@ export default function WritingSystems({languages}){
 		setAnswerText(`unlucky! ${game.question} is ${game.answer}`);
 		nextWord();
 	});
-	const nextWord = useCallback(async () => {
+	const nextWord = useCallback(async (isFirst = false) => {
 		setCurrentGuess("");
+		if(!isFirst){
+			setFreshWords(false);
+			setReportInfo({
+				language: game.language,
+				englishName: game.answer,
+				localName: game.question
+			})
+		}
+		setIsReported(false);
 		setQuestion(await game.nextWord());
 	});
 	const selectLanguage = useCallback(async(language) => {
 		localStorage.setItem("selectedLanguage", language);
-		await game.setLanguage(language);
-		nextWord(game);
+		game.setLanguage(language).then(() =>{
+			setHasTTS(game.hasTTS);
+			nextWord(true);
+		})
 	});
 
 	useEffect(() => {
@@ -53,10 +74,6 @@ export default function WritingSystems({languages}){
 		selectedLanguage = selectedLanguage || "ru"; // default to russian because it's what most people want
 		selectLanguage(selectedLanguage, game);
 		document.getElementById(`language-selector-${selectedLanguage}`).checked = true;
-		const selectorButtons = document.getElementsByName("language-selector");
-		for(let button of selectorButtons){
-			button.onchange = () => selectLanguage(button.value);
-		}
 	}, []);
 
 	return (
@@ -65,8 +82,8 @@ export default function WritingSystems({languages}){
 				<title>geoguessr language learning tools</title>
 				<meta charSet="utf-8" />
 			</Head>
-			<menu id="language-selector" className="centered">language: 
-					<SelectorButtonGroup buttons={languageButtons} name="language-selector" />
+			<menu id="language-selector" className="centered">
+					<SelectorButtonGroup buttons={languageButtons} name="language-selector" onChange={e => selectLanguage(e.target.value)} />
 			</menu>
 			<section id="question" className="centered">
 				<span
@@ -79,16 +96,20 @@ export default function WritingSystems({languages}){
 				>
 					{question}
 				</span>
-				<Button
-					id="audio-button"
-					onClick={() => game.listen()}
-					style={{
-						height: "3em",
-						margin: "auto 10px"
-					}}
-				>
-					🔊
-				</Button>
+				{hasTTS ? 
+					<Button
+						id="audio-button"
+						onClick={() => game.listen()}
+						style={{
+							height: "3em",
+							margin: "auto 10px"
+						}}
+					>
+						🔊
+					</Button>
+					:
+					""
+				}
 			</section>
 			<section
 				id="answer"
@@ -97,7 +118,8 @@ export default function WritingSystems({languages}){
 					color: correctness ? "var(--success)" : "var(--error)"
 				}}
 			>
-				{answerText}
+				{answerText} <br />
+				{!freshWords ? reportButton : ""}
 			</section>
 			<div id="guessOrGiveUp" className="centered">
 				<input
@@ -129,6 +151,7 @@ export default function WritingSystems({languages}){
 				<details>
 				<summary>changelog (click to expand):</summary>
 					<ul>
+						<li>2023-01-10: added khmer</li>
 						<li>2022-10-18: all data is now stored on my server. this improves loading times considerably, and fixes a bug where the same few questions would repeat</li>
 						<li>2021-12-31: initial version</li>
 					</ul>
@@ -139,10 +162,10 @@ export default function WritingSystems({languages}){
 }
 
 export function getStaticProps(){
-	const db = new Database(`${appRoot}/data/data.db`);
+	const db = openDB();
 	const languages = db.prepare(`
 		SELECT * FROM languages
-	`).all();
+	`).all().sort((a, b) => a.englishName.localeCompare(b.englishName));
 	return {
 		props: {
 			languages: languages

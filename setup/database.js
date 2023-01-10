@@ -190,7 +190,7 @@ const structureQueries = [
 			user TEXT NOT NULL,
 			addedAt INTEGER DEFAULT 0 NOT NULL
 			UNIQUE(id, creator, user)
-		)`)
+		)`).run();
 	},
 	function playTable(db){
 		db.prepare(`CREATE TABLE IF NOT EXISTS quizPlays(
@@ -198,7 +198,19 @@ const structureQueries = [
 			creator TEXT NOT NULL,
 			player TEXT,
 			playedAt INTEGER DEFAULT 0 NOT NULL
-		)`);
+		)`).run();
+	},
+	function badTransliterations(db){
+		db.prepare(`CREATE TABLE IF NOT EXISTS wordReports(
+			language TEXT NOT NULL,
+			localName TEXT NOT NULL,
+			englishName TEXT NOT NULL,
+			notes TEXT,
+			reportedBy TEXT
+		)`).run();
+	},
+	function removeUnnecessaryCountryCode(db){
+		db.prepare(`ALTER TABLE words DROP COLUMN country`).run();
 	}
 ]; // adding / removing columns should be done by a new query here to ensure database is versioned correctly
 

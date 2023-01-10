@@ -5,6 +5,7 @@ export default class WritingGame{
 	constructor(apiKey){
 		this.apiKey = apiKey;
 		this.words = [];
+		this.hasTTS = true;
 	}
 
 	get question(){
@@ -26,10 +27,11 @@ export default class WritingGame{
 	async setLanguage(language){
 		this.language = language;
 		this.words = [];
-		fetch("/api/get-language/" + language).then(
+		return fetch("/api/get-language/" + language).then(
 			r => r.json()
 		).then(
 			r => {
+				this.hasTTS = !!r.ttsCode;
 				this.tts = new TextReader(r.ttsCode, this.apiKey);
 			}
 		);
