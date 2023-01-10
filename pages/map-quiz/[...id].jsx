@@ -14,7 +14,7 @@ import ErrorPage from "/components/error-page";
 import SelectorButtonGroup from "/components/selector-button-group";
 import Button from "/components/button";
 
-import FavouriteButton from "/components/map-quiz/favourite-button";
+import RightIcons from "/components/map-quiz/right-icons";
 import GameOver from "/components/map-quiz/game-over";
 import TopBar from "/components/map-quiz/top-bar";
 import QuizProgress from "/components/map-quiz/quiz-progress";
@@ -150,9 +150,9 @@ export default function MapQuizPage(props){
 	const questionLayer = new GeoJsonLayer({
 		id: "questions",
 		data: props.geoJSONs,
-		getFillColor: (x => [...getColour(x.properties.__key), 100]),
+		getFillColor: (x => [...getColour(x.properties.key), 100]),
 		stroked: displayBorders,
-		getLineColor: (x => [...getColour(x.properties.__key), displayBorders ? 255 : 0]),
+		getLineColor: (x => [...getColour(x.properties.key), displayBorders ? 255 : 0]),
 		getLineWidth: 2,
 		lineWidthUnits: "pixels",
 		pickable: true,
@@ -160,7 +160,7 @@ export default function MapQuizPage(props){
 			getFillColor: [roundWrong, currentQuestion, hardMode],
 			getLineColor: [roundWrong, currentQuestion, hardMode, displayBorders]
 		},
-		onClick: (e) => checkAnswer(e.object.properties.__key)
+		onClick: (e) => checkAnswer(e.object.properties.key)
 	});
 
 	const [hoveringLayer, setHoveringLayer] = useState(null);
@@ -168,7 +168,7 @@ export default function MapQuizPage(props){
 	const refreshHovering = () => displayBorders && visibleMenu !== "game-over" ?
 		setHoveringLayer(new GeoJsonLayer({
 			id: "hovering",
-			data: props.geoJSONs.filter(x => x.properties.__key === hovering),
+			data: props.geoJSONs.filter(x => x.properties.key === hovering),
 			getFillColor: [...correctnessStyles.hovering, 100],
 			stroked: displayBorders,
 			getLineColor: [...correctnessStyles.hovering, 255],
@@ -199,7 +199,7 @@ export default function MapQuizPage(props){
 				repeat={true}
 				onHover={({object}) => {
 					if(!object){if(hovering) setHovering("");}
-					else{if(object.properties.__key !== hovering) setHovering(object.properties.__key);}
+					else{if(object.properties.key !== hovering) setHovering(object.properties.key);}
 				}}
 				getCursor={({isDragging}) => isDragging ? "grabbing" : (hovering ? "pointer" : "default")}
 				style={{
@@ -230,31 +230,21 @@ export default function MapQuizPage(props){
 				current={totalQuestions - quiz.questionOrder.length}
 			/>
 
-			<div
-				id="top-right-icons"
-				style={{
-					position: "absolute",
-					top: "60px",
-					right: "10px",
-					zIndex: "99",
-					fontSize: "24px",
-					visibility: visibleMenu === "game-over" ? "hidden" : "visible",
+			<RightIcons
+				isLoggedIn={props.isLoggedIn}
+				quiz={{
+					isFavourited: props.isFavourited,
+					id: props.quizId,
+					creator: props.creatorId
 				}}
-			>
-				<FavouriteButton isLoggedIn={props.isLoggedIn} isFavourited={props.isFavourited} quizId={props.quizId} creatorId={props.creatorId} />
-				<Button
-					dark={true}
-					onClick={
-						() => {
-							if(visibleMenu !== "settings") setVisibleMenu("settings");
-							else setVisibleMenu("");
-						}
+				onClick={
+					() => {
+						if(visibleMenu !== "settings") setVisibleMenu("settings");
+						else setVisibleMenu("");
 					}
-					title = "settings"
-				>
-					⚙️
-				</Button>
-			</div>
+				}
+				visibility={visibleMenu !== "game-over"}
+			/>
 
 			<div
 				id="settings"
@@ -350,8 +340,8 @@ export function getServerSideProps(context){
 		const hash = crypto.createHash('sha256');
 		hash.update(geo.user+"/"+geo.id);
 		newGeo.properties = {
-			"__key": hash.digest('hex'),
-			"__display": {
+			key: hash.digest('hex'),
+			display: {
 				type: geo.propertyType,
 				value: geo.value
 			}

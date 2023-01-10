@@ -1,0 +1,7 @@
+.icons{
+	position: absolute;
+	top: 60px;
+	right: 10px;
+	z-index: 99;
+	font-size: 24px;
+}

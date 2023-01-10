@@ -5,8 +5,8 @@ export default class MapQuiz{
 		this.questionObj = {};
 		this.correctness = {};
 		for(let location of props.geoJSONs.flat()){
-			this.questionObj[location.properties.__key] = location.properties.__display;
-			this.correctness[location.properties.__key] = 0;
+			this.questionObj[location.properties.key] = location.properties.display;
+			this.correctness[location.properties.key] = 0;
 		}
 		this.questionOrder = Object.keys(this.questionObj);
 	}
