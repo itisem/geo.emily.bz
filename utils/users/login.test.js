@@ -8,12 +8,12 @@ beforeAll(async () => {
 
 describe("bad logins", () => {
 	it("rejects invalid usernames", () => {
-		expect(login("admin", "password101112ABCD")).rejects.toBe("INVALID_USERNAME");
-		expect(login("admin/aaa", "password101112ABCD")).rejects.toBe("INVALID_USERNAME");
-		expect(login("admin", "password101112ABCD", {__testAllowReserved: true})).rejects.toBe("USERNAME_DOES_NOT_EXIST");
+		expect(login("admin", "password101112ABCD")).rejects.toBe("invalid username");
+		expect(login("admin/aaa", "password101112ABCD")).rejects.toBe("invalid username");
+		expect(login("admin", "password101112ABCD", {__testAllowReserved: true})).rejects.toBe("username does not exist");
 	});
 	it("rejects invalid passwords", () => {
-		expect(login("system", "password101112ABCD", {__testAllowReserved: true})).rejects.toBe("INCORRECT_PASSWORD");
+		expect(login("system", "password101112ABCD", {__testAllowReserved: true})).rejects.toBe("incorrect password");
 	});
 });
 

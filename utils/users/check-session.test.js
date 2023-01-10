@@ -9,14 +9,14 @@ beforeAll(() => {
 });
 
 describe("incorrect sessions", () => {
-	it("throws NO_SESSION if there is no session id", () => {
-		expect(() => checkSession(undefined)).toThrow("NO_SESSION");
+	it("throws no session if there is no session id", () => {
+		expect(() => checkSession(undefined)).toThrow("no session");
 	});
-	it("throws SESSION_NOT_FOUND if the session is fake", () => {
-		expect(() => checkSession("fakeSession")).toThrow("SESSION_NOT_FOUND");
+	it("throws session not found if the session is fake", () => {
+		expect(() => checkSession("fakeSession")).toThrow("session not found");
 	});
-	it("throws SESSION_EXPIRED if the session is old", () => {
-		expect(() => checkSession("expired")).toThrow("SESSION_EXPIRED");
+	it("throws session expired if the session is old", () => {
+		expect(() => checkSession("expired")).toThrow("session expired");
 	});
 });
 
@@ -25,7 +25,7 @@ describe("correct sessions", () => {
 		user: {
 			id: "testUserId",
 			displayName: "testUserName",
-			permissions: null
+			permissions: []
 		}
 	}
 	it("returns the user data correctly", () => {

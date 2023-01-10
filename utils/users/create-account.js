@@ -17,7 +17,7 @@ export default function createAccount(username, password, settings = {}){
 	const saltRounds = 10;
 	return bcrypt.hash(password, saltRounds).then(hash =>{
 		db.prepare("INSERT INTO users (id, displayName, password) VALUES (:id, :username, :password)").run({id: id, username: username, password: hash});
-		return "ACCOUNT_CREATED";
+		return true;
 	});
 
 }

@@ -1,4 +1,4 @@
-import WritingGame from './writing-game';
+import WritingGame from './game';
 
 let w = new WritingGame("");
 w.words = [["Nairobi", "Nairobi"], ["Охрид", "Ohrid"], ["Logroño", "Logroño"]];

@@ -8,26 +8,26 @@ beforeAll(() => {
 
 describe("erroneous accounts", () => {
 	it("rejects invalid usernames", () => {
-		expect(createAccount("aa", "01234567891011a")).rejects.toBe("INVALID_USERNAME");
-		expect(createAccount("aa123412341234123412341234", "01234567891011a")).rejects.toBe("INVALID_USERNAME");
-		expect(createAccount("aa/bc", "01234567891011a")).rejects.toBe("INVALID_USERNAME");
-		expect(createAccount("system", "01234567891011a")).rejects.toBe("INVALID_USERNAME");
-		expect(createAccount("-aaa", "01234567891011a")).rejects.toBe("INVALID_USERNAME");
+		expect(createAccount("aa", "01234567891011a")).rejects.toBe("invalid username");
+		expect(createAccount("aa123412341234123412341234", "01234567891011a")).rejects.toBe("invalid username");
+		expect(createAccount("aa/bc", "01234567891011a")).rejects.toBe("invalid username");
+		expect(createAccount("system", "01234567891011a")).rejects.toBe("invalid username");
+		expect(createAccount("-aaa", "01234567891011a")).rejects.toBe("invalid username");
 	});
 	it("rejects invalid passwords", () => {
-		expect(createAccount("system", "8letters", {__testAllowReserved: true})).rejects.toBe("INVALID_PASSWORD");
-		expect(createAccount("system", "01234567891011", {__testAllowReserved: true})).rejects.toBe("INVALID_PASSWORD");
-		expect(createAccount("system", "abcdefghijklmnopQRSTUVWXYZ", {__testAllowReserved: true})).rejects.toBe("INVALID_PASSWORD");
+		expect(createAccount("system", "8letters", {__testAllowReserved: true})).rejects.toBe("invalid password");
+		expect(createAccount("system", "01234567891011", {__testAllowReserved: true})).rejects.toBe("invalid password");
+		expect(createAccount("system", "abcdefghijklmnopQRSTUVWXYZ", {__testAllowReserved: true})).rejects.toBe("invalid password");
 	});
 	it("rejects existing users", () => {
-		expect(createAccount("testUserName", "01234567891011a")).rejects.toBe("USER_EXISTS");
+		expect(createAccount("testUserName", "01234567891011a")).rejects.toBe("user already exists");
 	});
 });
 
 describe("working accounts", () => {
 	it("creates accounts", async () => {
 		const checkAccount = () => {var db = openDB(); return !!db.prepare("SELECT * FROM users WHERE displayName='system'").get();};
-		await expect(createAccount("system", "01234567891011a", {__testAllowReserved: true})).resolves.toBe("ACCOUNT_CREATED");
+		await expect(createAccount("system", "01234567891011a", {__testAllowReserved: true})).resolves.toBe(true);
 		expect(checkAccount()).toBe(true);
 	});
 })
