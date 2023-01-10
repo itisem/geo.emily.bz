@@ -18,7 +18,6 @@ function getQuizzesByCategory(quizzes){
 }
 
 function CountryContainer({quizzes, category, categoryInfo, frontPageOnly}){
-	console.log(frontPageOnly);
 	const linkMore = !quizzes.every(x => x.isFrontPage) && frontPageOnly;
 	return (
 		<section key={category} style={{borderRadius: 30, background: "rgb(0,0,0,0.1)", maxWidth: 290}}>
