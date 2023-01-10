@@ -17,8 +17,9 @@ function getQuizzesByCategory(quizzes){
 	return quizzesByCategory;
 }
 
-function CountryContainer({quizzes, category, categoryInfo}){
-	const linkMore = !quizzes.every(x => x.isFrontPage);
+function CountryContainer({quizzes, category, categoryInfo, frontPageOnly}){
+	console.log(frontPageOnly);
+	const linkMore = !quizzes.every(x => x.isFrontPage) && frontPageOnly;
 	return (
 		<section key={category} style={{borderRadius: 30, background: "rgb(0,0,0,0.1)", maxWidth: 290}}>
 			<h2 style={{
@@ -32,7 +33,7 @@ function CountryContainer({quizzes, category, categoryInfo}){
 			</h2>
 			<ul>
 				{quizzes.map(quiz => {
-					if(quiz.isFrontPage){
+					if(quiz.isFrontPage || !frontPageOnly){
 						return (<li key={quiz.alias}><a href={"/map-quiz/" + quiz.alias}>{quiz.altTitle}</a></li>)
 					}
 				})}
@@ -58,7 +59,7 @@ export default function MapQuizPage({quizzes, favouriteQuizzes, categoryInfo}){
 			<h1>map quizzes</h1>
 			<FavouriteQuizzes quizzes={favouriteQuizzes} includeButton={true} />
 			<h2>highlighted quizzes</h2>
-			filter quizzes: <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
+			search quizzes: <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
 			<section 
 				id="all-quizzes"
 				style={{
@@ -68,7 +69,15 @@ export default function MapQuizPage({quizzes, favouriteQuizzes, categoryInfo}){
 					gridAutoFlow: "dense",
 				}}
 			>
-				{Object.keys(quizzesByCategory).map(category => <CountryContainer quizzes={quizzesByCategory[category]} category={category} categoryInfo={categoryInfo[category]} key={category} />)}
+				{Object.keys(quizzesByCategory).map(category => 
+					<CountryContainer
+						quizzes={quizzesByCategory[category]}
+						category={category}
+						categoryInfo={categoryInfo[category]}
+						key={category}
+						frontPageOnly={!searchText}
+					/>
+				)}
 			</section>
 		</>
 	);
