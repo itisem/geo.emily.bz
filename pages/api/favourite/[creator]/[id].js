@@ -1,10 +1,9 @@
-import Database from "better-sqlite3";
-import * as appRoot from "app-root-path";
+import openDB from "/utils/db/open-db";
 import getFavourites from "/utils/db/get-favourite-quizzes";
 import checkSession from "/utils/db/check-session";
 
 export default function modifyFavourite(req, res){
-	const db = new Database(`${appRoot}/data/data.db`);
+	const db = openDB();
 	let sessionInfo;
 	try{
 		sessionInfo = checkSession(req.cookies.sessionId);

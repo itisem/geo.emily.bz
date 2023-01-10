@@ -1,8 +1,7 @@
-import Database from "better-sqlite3";
-import * as appRoot from "app-root-path";
+import openDB from "/utils/db/open-db";
 
 export default function getLanguage(req, res){
-	const db = new Database(`${appRoot}/data/data.db`);
+	const db = openDB();
 	const query = db.prepare(`
 		SELECT * FROM languages
 		WHERE id = ?

@@ -1,9 +1,8 @@
-import Database from "better-sqlite3";
-import * as appRoot from "app-root-path";
+import openDB from "/utils/db/open-db";
 import checkSession from "/utils/db/check-session";
 
 export default function logPlay(req, res){
-	const db = new Database(`${appRoot}/data/data.db`);
+	const db = openDB();
 	let userId;
 	try{
 		const sessionInfo = checkSession(req.cookies.sessionId);
