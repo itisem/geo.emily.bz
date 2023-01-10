@@ -28,29 +28,32 @@ import ErrorPage from "/components/error-page";
 
 import MapQuiz from "/browser-modules/map-quiz";
 
-const gmButtons = [
-	{
-		text: "roadmap",
-		value: "gm",
-		defaultChecked: true
-	},
-	{
-		text: "no labels",
-		value: "gmNoLabels"
-	},
-	,
-	{
-		text: "terrain",
-		value: "gmTerrain"
-	}
-];
-
-const osmButtons = [
-	{
-		text: "roadmap",
-		value: "osm",
-	}
-];
+const mapButtons = (defaultChecked) => {
+	let defaultMap = "gm";
+	if(["noMap", "gm", "gmNoLabels", "osm"].includes(defaultMap)) defaultMap = defaultChecked;
+	return [
+		{
+			text: "no map",
+			value: "noMap",
+			defaultChecked: defaultMap === "noMap"
+		},
+		{
+			text: "google maps",
+			value: "gm",
+			defaultChecked: defaultMap === "gm"
+		},
+		{
+			text: "no labels",
+			value: "gmNoLabels",
+			defaultChecked: defaultMap === "gmNoLabels"
+		},
+		{
+			text: "openstreetmap",
+			value: "osm",
+			defaultChecked: defaultMap === "osm"
+		}
+	];
+}
 
 const correctnessStyles = {
 	wrong: [139, 0, 0],
@@ -75,6 +78,7 @@ export default function MapQuizPage(props){
 	const [visibleMenu, setVisibleMenu] = useState("");
 	const [forceClick, setForceClick] = useState(true);
 	const [displayBorders, setDisplayBorders] = useState(true);
+	const [hardMode, setHardMode] = useState(false);
 	const [maxTries, setMaxTries] = useState(1);
 	const [hovering, setHovering] = useState("");
 	const [roundWrong, setRoundWrong] = useState([]);
@@ -85,11 +89,12 @@ export default function MapQuizPage(props){
 	const changeForceClick = (e) => setForceClick(e.target.checked);
 	const changeTries = (e) => setMaxTries(e.target.value);
 	const changeDisplayBorders = (e) => setDisplayBorders(e.target.checked);
+	const changeHardMode = (e) => setHardMode(e.target.checked);
 
 	const checkAnswer = useCallback((jsonKey) => {
 		if(quiz.questions.length === 0) return;
 		const isCorrect = quiz.checkAnswer(jsonKey);
-		if(roundWrong.length < maxTries){
+		if(roundWrong.length < maxTries && (quiz.correctness[jsonKey] === 0 || isCorrect || hardMode)){
 			quiz.setCorrectness(isCorrect);
 			if(!isCorrect){
 				setRoundWrong([...roundWrong, jsonKey]);
@@ -181,6 +186,7 @@ export default function MapQuizPage(props){
 			if(roundWrong.length < maxTries) return correctnessStyles.unselected;
 			return correctnessStyles.force;
 		}
+		if(hardMode) return correctnessStyles.unselected;
 		if(roundWrong.includes(key)) return correctnessStyles.roundWrong;
 		switch(quiz.correctness[key]){
 			case -1: return correctnessStyles.wrong;
@@ -199,8 +205,8 @@ export default function MapQuizPage(props){
 		lineWidthUnits: "pixels",
 		pickable: true,
 		updateTriggers: {
-			getFillColor: [roundWrong, currentQuestion],
-			getLineColor: [roundWrong, currentQuestion, displayBorders]
+			getFillColor: [roundWrong, currentQuestion, hardMode],
+			getLineColor: [roundWrong, currentQuestion, hardMode, displayBorders]
 		},
 		onClick: (e) => checkAnswer(e.object.properties.__key)
 	});
@@ -249,7 +255,8 @@ export default function MapQuizPage(props){
 					width: "100%",
 					height: "calc(100vh - 40px)",
 					top: "40px",
-					margin: "0 auto"
+					margin: "0 auto",
+					background: "#eeeeee"
 				}}
 			/>
 
@@ -335,19 +342,21 @@ export default function MapQuizPage(props){
 					visibility: visibleMenu === "settings" ? "visible" : "hidden",
 					padding: 0,
 					margin: 0,
-					paddingTop: "5px",
-					fontFamily: "Manrope"
+					padding: "5px",
+					paddingTop: "8px",
+					fontFamily: "Manrope",
+					maxWidth: "400px"
 				}}
 			>
-				select map: 
-					<b>google maps</b>: <SelectorButtonGroup buttons={gmButtons} onChange={e => setMapType(e.target.value)} name="select-map" />
-					<b>osm</b>: <SelectorButtonGroup buttons={osmButtons} onChange={e => setMapType(e.target.value)} name="select-map" /><br/>
-					<input type="checkbox" id="force-click" name="force-click" onChange={changeForceClick} checked={forceClick} />
-					<label htmlFor="force-click">force click on correct answer</label>
-					<input type="checkbox" id="display-borders" name="display-borders" onChange={changeDisplayBorders} checked={displayBorders} />
-					<label htmlFor="display-borders">show borders</label><br />
-					<label htmlFor="max-tries">maximum tries: </label>
-					<input type="number" id="max-tries" name="max-tries" value={maxTries} size="3" min="0" onChange={changeTries} /><br />
+				<SelectorButtonGroup buttons={mapButtons(props.defaultMap)} onChange={e => setMapType(e.target.value)} name="select-map" /> <br />
+				<input type="checkbox" id="force-click" onChange={changeForceClick} checked={forceClick} />
+				<label htmlFor="force-click">force click on correct answer</label>
+				<input type="checkbox" id="display-borders" onChange={changeDisplayBorders} checked={displayBorders} />
+				<label htmlFor="display-borders">show borders</label><br />
+				<input type="checkbox" id="hard-mode" onChange={changeHardMode} checked={hardMode} />
+				<label htmlFor="hard-mode">hard mode</label><br />
+				<label htmlFor="max-tries">maximum tries: </label>
+				<input type="number" value={maxTries} size="3" min="0" onChange={changeTries} /><br />
 			</div>
 
 			<div

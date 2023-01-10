@@ -41,6 +41,7 @@ const mapDefaults = {
 };
 
 export default function MapTiles(map){
+	if(map === "noMap") return null;
 	let mapSettings = (map && map in mapModes) ? mapModes[map] : mapModes.osm;
 	for(let key in mapDefaults){
 		if(!(key in mapSettings)){
