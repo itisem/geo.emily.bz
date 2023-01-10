@@ -2,7 +2,7 @@ import deleteReport from "/utils/writing-systems/delete-report";
 import getWordReports from "/utils/writing-systems/get-reports";
 import deleteWord from "/utils/writing-systems/delete-word";
 import addWord from "/utils/writing-systems/add-word";
-import isAdmin from "/utils/db/is-admin";
+import isAdmin from "/utils/users/is-admin";
 
 export default function fixWord(req, res){
 	let {language, localName, englishName, newLocalName, newEnglishName} = req.body;

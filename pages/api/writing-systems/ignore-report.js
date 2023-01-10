@@ -1,4 +1,4 @@
-import isAdmin from "/utils/db/is-admin";
+import isAdmin from "/utils/users/is-admin";
 import getWordReports from "/utils/writing-systems/get-reports";
 import deleteReport from "/utils/writing-systems/delete-report";
 

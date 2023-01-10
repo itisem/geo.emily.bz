@@ -1,6 +1,6 @@
 import openDB from "/utils/db/open-db";
-import getFavourites from "/utils/db/get-favourite-quizzes";
-import checkSession from "/utils/db/check-session";
+import getFavourites from "/utils/map-quiz/get-favourite-quizzes";
+import checkSession from "/utils/users/check-session";
 
 export default function modifyFavourite(req, res){
 	const db = openDB();

@@ -9,5 +9,5 @@ export default function deleteWord(language, localName, englishName){
 		AND englishName=?`).run([
 			language, localName, englishName
 	]);
-	return 1;
+	return true;
 }

@@ -2,7 +2,7 @@ import Head from "next/head";
 import DownloadButton from "/components/download-button";
 import SelectorButtonGroup from "/components/selector-button-group";
 import {useEffect, useState, useCallback} from 'react';
-import LocationFixer from '/browser-modules/location-fixer';
+import LocationFixer from '/utils/pano-tools/location-fixer';
 
 export default function PanoTools(){
 	let [errorMessage, setErrorMessage] = useState("");

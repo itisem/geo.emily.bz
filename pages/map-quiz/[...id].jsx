@@ -1,7 +1,7 @@
-import checkSession from "/utils/db/check-session";
-import getQuiz from "/utils/db/get-quiz";
-import getOfficialQuiz from "/utils/db/get-official-quiz";
-import getGeoJSONFromCategory from "/utils/db/get-geojson-from-category";
+import checkSession from "/utils/users/check-session";
+import getQuiz from "/utils/map-quiz/get-quiz";
+import getOfficialQuiz from "/utils/map-quiz/get-official-quiz";
+import getGeoJSONFromCategory from "/utils/map-quiz/get-geojson-from-category";
 import getGeoJSONPolygon from "/utils/maps/get-geojson-polygon";
 import getViewStateFromBounds from "/utils/maps/get-viewstate-from-bounds";
 
@@ -26,7 +26,7 @@ import Button from "/components/button";
 import FavouriteButton from "/components/favourite-button";
 import ErrorPage from "/components/error-page";
 
-import MapQuiz from "/browser-modules/map-quiz";
+import MapQuiz from "/utils/map-quiz/game";
 
 const mapButtons = (defaultChecked) => {
 	let defaultMap = "gm";

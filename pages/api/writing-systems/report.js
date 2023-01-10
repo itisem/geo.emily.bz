@@ -1,5 +1,5 @@
 import openDB from "/utils/db/open-db";
-import checkSession from "/utils/db/check-session";
+import checkSession from "/utils/users/check-session";
 
 export default function reportWord(req, res){
 	const {language, localName, englishName, notes} = req.query;

@@ -1,11 +1,10 @@
-import Database from "better-sqlite3";
-import * as appRoot from "app-root-path";
+import openDB from "/utils/db/open-db";
 import Head from "next/head";
 
 import FavouriteQuizzes from "/components/favourite-quizzes";
 
-import checkSession from "/utils/db/check-session";
-import getFavouriteQuizzes from "/utils/db/get-favourite-quizzes";
+import checkSession from "/utils/users/check-session";
+import getFavouriteQuizzes from "/utils/map-quiz/get-favourite-quizzes";
 
 function CountryContainer({quizzes, category, categoryInfo}){
 	const linkMore = !quizzes.every(x => x.isFrontPage);
@@ -67,7 +66,7 @@ export function getServerSideProps(context){
 		favourites = [];
 	}
 	favourites = favourites.map(x => {x.url = `@${x.user.displayName}/${x.id}`; return x;});
-	const db = new Database(`${appRoot}/data/data.db`);
+	const db = openDB();
 	const quizzes = db.prepare(`
 		SELECT alias, altTitle, name, emoji, isCountry, isFrontPage, quizCategories.category
 		FROM quizAliases INNER JOIN quizCategories ON quizAliases.category = quizCategories.category

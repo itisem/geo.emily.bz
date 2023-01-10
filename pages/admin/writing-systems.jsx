@@ -1,7 +1,7 @@
-import isAdmin from "/utils/db/is-admin";
+import isAdmin from "/utils/users/is-admin";
+import getWordReports from "/utils/writing-systems/get-reports";
 import ErrorPage from "/components/error-page";
 import Button from "/components/button";
-import getWordReports from "/utils/writing-game/get-reports";
 import Head from "next/head";
 import {useState} from "react";
 

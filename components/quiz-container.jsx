@@ -36,7 +36,7 @@ export default function QuizContainer({quizzes, quizInfo}){
 			} 
 			<div className={styles.quizcontainer}>
 				{displayedQuizzes.map(quiz => 
-					<div className={styles.quizbox}>
+					<div className={styles.quizbox} key={JSON.stringify(quiz)}>
 						<b><a href={`/map-quiz/${quiz.url}`} title={quiz.title}>{quiz.title}</a></b> <br/>
 						{quizInfo(quiz)}
 					</div>

@@ -1,4 +1,4 @@
-import loginUser from "/utils/db/login";
+import loginUser from "/utils/users/login";
 import cookie from "cookie";
 
 export default function login(req, res){

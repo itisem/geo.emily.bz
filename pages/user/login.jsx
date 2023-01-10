@@ -1,8 +1,8 @@
 import Head from "next/head";
 import Button from "/components/button";
 import {useState} from "react";
-import validateUsername from "/utils/db/validate-username";
-import validatePassword from "/utils/db/validate-password";
+import validateUsername from "/utils/users/validate-username";
+import validatePassword from "/utils/users/validate-password";
 
 export default function LoginPage(){
 	const [username, setUsername] = useState("");

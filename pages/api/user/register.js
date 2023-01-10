@@ -1,4 +1,4 @@
-import createAccount from "/utils/db/create-account";
+import createAccount from "/utils/users/create-account";
 import login from "/utils/db/login";
 import cookie from "cookie";
 export default function register(req, res){

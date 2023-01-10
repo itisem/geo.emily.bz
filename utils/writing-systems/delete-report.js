@@ -7,5 +7,5 @@ export default function deleteWordReport(language, localName, englishName){
 		WHERE language = :language AND localName = :localName AND englishName = :englishName`).run({
 			language, localName, englishName
 	});
-	return 1;
+	return true;
 }

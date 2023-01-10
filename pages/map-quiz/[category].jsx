@@ -1,6 +1,6 @@
-import getUserQuizzes from "/utils/db/get-user-quizzes";
-import getCategoryQuizzes from "/utils/db/get-category-quizzes";
-import getCategoryInfo from "/utils/db/get-category-info";
+import getUserQuizzes from "/utils/map-quiz/get-user-quizzes";
+import getCategoryQuizzes from "/utils/map-quiz/get-category-quizzes";
+import getCategoryInfo from "/utils/map-quiz/get-category-info";
 import Head from "next/head";
 import QuizContainer from "/components/quiz-container";
 
