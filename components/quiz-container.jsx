@@ -1,31 +1,13 @@
 import styles from "./quiz-container.module.css";
 import {useState, useEffect} from "react";
-import lunr from "lunr";
-
-const createSearch = (quizzes) => lunr(function(){
-	this.field("title");
-	this.ref("id");
-	quizzes.forEach(quiz => this.add(quiz));
-});
+import {Index} from "flexsearch";
 
 export default function QuizContainer({quizzes, quizInfo}){
 	const [searchText, setSearchText] = useState("");
-	const [displayedQuizzes, setDisplayedQuizzes] = useState(quizzes);
-	const [quizSearch, setQuizSearch] = useState(lunr(() => {}));
-
-	useEffect(() => {
-		setQuizSearch(createSearch(quizzes));
-	}, []);
-
-	useEffect(() => {
-		if(!searchText){
-			setDisplayedQuizzes(quizzes);
-			return;
-		}
-		const displayedQuizIds = quizSearch.search("*" + searchText + "*").map(x => x.ref);
-		setDisplayedQuizzes(quizzes.filter(quiz => displayedQuizIds.includes(quiz.id)));
-	}, [searchText]);
-
+	const index = new Index({tokenize: "full"});
+	quizzes.forEach(quiz => index.add(quiz.url, quiz.title));
+	const searchResults = index.search(searchText);
+	const displayedQuizzes = searchText ? quizzes.filter(x => searchResults.includes(x.url)) : quizzes;
 
 	if(!quizInfo) quizInfo = () => "";
 	return (

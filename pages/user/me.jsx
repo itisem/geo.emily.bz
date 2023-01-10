@@ -6,6 +6,7 @@ import Button from "/components/button";
 import QuizContainer from "/components/quiz-container";
 import FavouriteQuizzes from "/components/favourite-quizzes";
 import ErrorPage from "/components/error-page";
+import Head from "next/head";
 
 export default function Me(props){
 	if(props.error){
@@ -20,6 +21,9 @@ export default function Me(props){
 		/>
 	</>;
 	return (<>
+		<Head>
+			<title>your profile</title>
+		</Head>
 		<h1>your profile</h1>
 		<section id="user-info" className="centered">
 			<p>you are logged in as <b>{props.message.user.displayName}</b></p>
@@ -47,7 +51,8 @@ export function getServerSideProps(context){
 			x.url = x.frontpageURL || `@${x.displayName}/${x.id}`;
 			return x;
 		});
-		const favourites = getFavouriteQuizzes(sessionInfo.user.id);
+		let favourites = getFavouriteQuizzes(sessionInfo.user.id);
+		favourites = favourites.map(x => {x.url = `@${x.user.displayName}/${x.id}`; return x;});
 		const players = getQuizPlayers(sessionInfo.user.id);
 		return {
 			props: {
