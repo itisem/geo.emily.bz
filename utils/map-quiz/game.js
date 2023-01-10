@@ -5,8 +5,8 @@ export default class MapQuiz{
 		this.questionObj = {};
 		this.correctness = {};
 		for(let location of props.geoJSONs.flat()){
-			this.questionObj[location.key] = this.questionMap(location, props.displayValues);
-			this.correctness[location.key] = 0;
+			this.questionObj[location.properties.__key] = location.properties.__display;
+			this.correctness[location.properties.__key] = 0;
 		}
 		this.questionOrder = Object.keys(this.questionObj);
 	}
@@ -21,18 +21,13 @@ export default class MapQuiz{
 	}
 
 	get isImageQuestion(){
-		const q = this.currentQuestion;
-		if(Object.keys(q).length === 0) return false;
-		if(Object.keys(q).length === 1 && q[Object.keys(q)[0]].type == "image"){
-			return true;
-		}
-		return false;
+		return this.currentQuestion.type === "image";
 	}
 
 	get currentQuestionHTML(){
 		const q = this.currentQuestion;
 		let s = "";
-		return Object.keys(q).map(x => this.transformValue(q[x])).join("<br />");
+		return this.transformValue(this.currentQuestion);
 	}
 
 	get questions(){
@@ -91,13 +86,5 @@ export default class MapQuiz{
 			[array [i], array[j]] = [array[j], array[i]];
 		}
 		return array;
-	}
-
-	questionMap(location, values){
-		let obj = {};
-		for(let value of values){
-			obj[value] = location.properties[value];
-		}
-		return obj;
 	}
 }

@@ -1,0 +1,19 @@
+.imagequestion, .textquestion{
+	position: absolute;
+	top: 60px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 1;
+	padding: 0;
+	margin: 0;
+	padding: 0px 5px;
+	font-family: "Manrope";
+	font-size: 1.5em;
+	max-width: 33vw;
+	text-align: center;
+	border-radius: 10px;
+}
+
+.textquestion{
+	background: var(--bglight);
+}

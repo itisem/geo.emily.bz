@@ -1,31 +1,34 @@
 import checkSession from "/utils/users/check-session";
+
 import getQuiz from "/utils/map-quiz/get-quiz";
 import getOfficialQuiz from "/utils/map-quiz/get-official-quiz";
 import getGeoJSONFromCategory from "/utils/map-quiz/get-geojson-from-category";
-import getGeoJSONPolygon from "/utils/maps/get-geojson-polygon";
-import getViewStateFromBounds from "/utils/maps/get-viewstate-from-bounds";
+import MapQuiz from "/utils/map-quiz/game";
+import quizIsFavourited from "/utils/map-quiz/is-favourited";
 
-import bbox from "@turf/bbox";
+import getViewStateFromBounds from "/utils/maps/get-viewstate-from-bounds";
+import bboxFromMany from "/utils/maps/bbox-from-many";
+
+import MapTiles from "/components/map-tiles";
+import ErrorPage from "/components/error-page";
+import SelectorButtonGroup from "/components/selector-button-group";
+import Button from "/components/button";
+
+import FavouriteButton from "/components/map-quiz/favourite-button";
+import GameOver from "/components/map-quiz/game-over";
+import TopBar from "/components/map-quiz/top-bar";
+import QuizProgress from "/components/map-quiz/quiz-progress";
+
 import * as crypto from "crypto";
 import prettyMs from "pretty-ms";
-import Database from "better-sqlite3";
-import * as appRoot from "app-root-path";
 
 import DeckGL from '@deck.gl/react';
-import MapTiles from "/components/map-tiles";
 import {GeoJsonLayer} from '@deck.gl/layers';
 import {PostProcessEffect, MapView} from '@deck.gl/core';
 import {triangleBlur} from '@luma.gl/shadertools';
 
 import {useState, useEffect, useCallback, useMemo} from 'react';
 import Head from "next/head";
-
-import SelectorButtonGroup from "/components/selector-button-group";
-import Button from "/components/button";
-import FavouriteButton from "/components/map-quiz/favourite-button";
-import ErrorPage from "/components/error-page";
-
-import MapQuiz from "/utils/map-quiz/game";
 
 const mapButtons = (defaultChecked) => {
 	let defaultMap = "gm";
@@ -68,7 +71,6 @@ export default function MapQuizPage(props){
 		return (<ErrorPage errorMessage={props.errorMessage} />)
 	}
 	const totalQuestions = props.geoJSONs.length;
-	const shapes = useMemo(() => props.geoJSONs.map(x => x.shape), []);
 
 	const [viewState, setViewState] = useState(getViewStateFromBounds(props.bbox, 1920, 1080)); //avoids hydration errors since window.innerWidth only works in the browser
 	const quiz = useMemo(() => new MapQuiz(props), []);
@@ -104,7 +106,7 @@ export default function MapQuizPage(props){
 			setCurrentQuestion(quiz.nextQuestion());
 		}
 		if(quiz.questions.length == 0){
-			setTimeDiff(prettyMs(new Date().getTime() - startTime, {verbose: true, secondsDecimalDigits: 0}));
+			setTimeDiff(new Date().getTime() - startTime);
 			setVisibleMenu("game-over");
 			fetch(`/api/log-quiz-completion/${props.creatorId}/${props.quizId}`);
 		}
@@ -121,7 +123,6 @@ export default function MapQuizPage(props){
 		setRoundWrong([]);
 	}
 
-
 	const restartQuiz = () => {
 		if(visibleMenu){
 			setVisibleMenu("");
@@ -130,54 +131,6 @@ export default function MapQuizPage(props){
 		quiz.randomiseQuestions();
 		setCurrentQuestion(quiz.currentQuestionHTML);
 		setStartTime(new Date().getTime());
-	}
-
-	const getGeoJSONLayers = () => {
-		let layers = {
-			"current": [],
-			"wrong": [],
-			"unselected": [],
-			"correct": [],
-			"roundWrong": [],
-			"hovering": []
-		};
-		if(!quiz.correctness){ // ensures that un-initialised quizzes work
-			props.geoJSONs.map(x => layers.current.push(x));
-			return layers;
-		}
-		for(let geo of props.geoJSONs){
-			if(geo.key == hovering){
-				layers.hovering.push(geo);
-			}
-			if(geo.key == quiz.currentQuestionId){
-				layers.current.push(geo);
-			}
-			else{
-				if(roundWrong.includes(geo.key) && roundWrong.length < maxTries){
-					layers.roundWrong.push(geo);
-				}
-				else{
-					switch(quiz.correctness[geo.key]){
-						case -1:
-							layers.wrong.push(geo);
-							break;
-						case 0:
-							layers.unselected.push(geo);
-							break;
-						case 1:
-							layers.correct.push(geo);
-							break;
-					}
-				}
-			}
-		}
-		return [
-			createGeoJSON("wrong", layers.wrong, correctnessStyles.wrong),
-			createGeoJSON("correct", layers.correct, correctnessStyles.correct),
-			createGeoJSON("unselected", layers.unselected, correctnessStyles.unselected),
-			createGeoJSON("roundWrong", layers.roundWrong, correctnessStyles.roundWrong),
-			createGeoJSON("current", layers.current, roundWrong.length >= maxTries ? correctnessStyles.force : correctnessStyles.unselected),
-		];
 	}
 
 	const getColour = (key) => {
@@ -196,7 +149,7 @@ export default function MapQuizPage(props){
 
 	const questionLayer = new GeoJsonLayer({
 		id: "questions",
-		data: shapes,
+		data: props.geoJSONs,
 		getFillColor: (x => [...getColour(x.properties.__key), 100]),
 		stroked: displayBorders,
 		getLineColor: (x => [...getColour(x.properties.__key), displayBorders ? 255 : 0]),
@@ -215,7 +168,7 @@ export default function MapQuizPage(props){
 	const refreshHovering = () => displayBorders && visibleMenu !== "game-over" ?
 		setHoveringLayer(new GeoJsonLayer({
 			id: "hovering",
-			data: props.geoJSONs.filter(x => x.key === hovering).map(x => x.shape),
+			data: props.geoJSONs.filter(x => x.properties.__key === hovering),
 			getFillColor: [...correctnessStyles.hovering, 100],
 			stroked: displayBorders,
 			getLineColor: [...correctnessStyles.hovering, 255],
@@ -259,46 +212,22 @@ export default function MapQuizPage(props){
 				}}
 			/>
 
-			<div
-				id="top-bar"
-				style={{
-					position: "absolute",
-					top: "60px",
-					left: "50%",
-					transform: "translateX(-50%)",
-					zIndex: "1",
-					padding: 0,
-					margin: 0,
-					paddingTop: "5px",
-					paddingBottom: "5px",
-					background: quiz.isImageQuestion ? "none" : "var(--bglight)",
-					fontFamily: "Manrope",
-					visibility: visibleMenu === "game-over" ? "hidden" : "visible",
-					fontSize: "1.5em",
-					maxWidth: "33vw",
-					textAlign: "center",
-					borderRadius: "10px"
+			<TopBar
+				visibility={visibleMenu !== "game-over"}
+				controls={{
+					prev: prevQuestion,
+					next: skipQuestion,
+					restart: restartQuiz
 				}}
-			>
-				<div id="question" dangerouslySetInnerHTML={{__html: currentQuestion}}></div>
-				<div id="skip-button" style={{textAlign: "center"}}>
-					<Button id="skip" onClick={prevQuestion}>Prev ←</Button>
-					<Button id="skip" onClick={skipQuestion}>Next →</Button>
-					<Button id="restart" onClick={restartQuiz}>Restart</Button>
-				</div>
-			</div>
+				question={{
+					html: currentQuestion,
+					imageQuestion: quiz.isImageQuestion
+				}}
+			/>
 
-			<progress 
-				max={totalQuestions}
-				value={totalQuestions - quiz.questionOrder.length}
-				style={{
-					zIndex: "1",
-					position: "absolute",
-					bottom: "20px",
-					left: "50%",
-					transform: "translateX(-50%)",
-					width: "min(25%, 150px)",
-				}}
+			<QuizProgress 
+				total={totalQuestions}
+				current={totalQuestions - quiz.questionOrder.length}
 			/>
 
 			<div
@@ -358,53 +287,31 @@ export default function MapQuizPage(props){
 				<input type="number" value={maxTries} size="3" min="0" onChange={changeTries} /><br />
 			</div>
 
-			<div
-				id="game-over"
-				style={{
-					visibility: visibleMenu === "game-over" ? "visible" : "hidden",
-					position: "absolute",
-					top: "50%",
-					left: "50%",
-					transform: "translate(-50%, -50%)",
-					background: "var(--bglight)",
-					fontFamily: "Manrope",
-					zIndex: "999",
-					padding: "2em",
-					fontSize: "1.5em",
-					textAlign: "center",
-					borderRadius: "30px"
+			<GameOver
+				visibility={visibleMenu === "game-over"}
+				onClick={restartQuiz}
+				stats={{
+					correct: quiz.totalCorrect,
+					total: totalQuestions,
+					time: prettyMs(timeDiff, {verbose: true, secondsDecimalDigits: 0})
 				}}
-			>
-				<div style={{fontSize: "2em"}}>
-					Game over!
-				</div>
-				You got {quiz.totalCorrect} out of {totalQuestions} questions correct in {timeDiff}. <br/>
-				<Button
-					id="restart-button"
-					onClick = {restartQuiz}
-					style = {{
-						fontSize: "1em"
-					}}
-				>
-					Restart
-				</Button><br/>
-				<a href="/map-quiz">&lt; Back to quizzes</a>
-			</div>
+			/>
 		</>
 	);
 }
 
 export function getServerSideProps(context){
 	const params = context.params;
-	let loggedInAs = "";
 	let isFavourited = false;
+	let isLoggedIn;
+	let loggedInAs = "";
 	try{
 		const sessionInfo = checkSession(context.req.cookies.sessionId);
-		loggedInAs = "";
 		loggedInAs = sessionInfo.user.id;
+		isLoggedIn = !!sessionInfo.user.id;
 	}
 	catch{
-		loggedInAs = "";
+		isLoggedIn = false;
 	}
 
 	let quizDetails;
@@ -423,15 +330,13 @@ export function getServerSideProps(context){
 		};
 	}
 
-	const db = new Database(`${appRoot}/data/data.db`);
-
-	isFavourited = !!db.prepare(`SELECT * FROM favouriteQuizzes WHERE creator = :creator AND id = :id AND user = :user`).get({
+	isFavourited = quizIsFavourited({
 		creator: quizDetails.user,
 		id: quizDetails.id,
 		user: loggedInAs
-	})
+	});
 
-	let geoJSONs = getGeoJSONFromCategory(quizDetails.categoryId, quizDetails.categoryUser, quizDetails.displayValues);
+	let geoJSONs = getGeoJSONFromCategory(quizDetails.categoryId, quizDetails.categoryUser, quizDetails.displayValues, quizDetails.user);
 	if(geoJSONs.length === 0){
 		return {
 				props: {
@@ -440,37 +345,32 @@ export function getServerSideProps(context){
 				}
 		};
 	}
-	geoJSONs = geoJSONs.map(x => {
-		x.shape = JSON.parse(x.shape);
+	geoJSONs = geoJSONs.map(geo => {
+		let newGeo = JSON.parse(geo.shape);
 		const hash = crypto.createHash('sha256');
-		hash.update(x.user+"/"+x.id);
-		x.key = hash.digest('hex');
-		x.shape.properties["__key"] = x.key;
-		return x;
-	});
-	const coordsOnly = geoJSONs.map(x => {
-		const poly = getGeoJSONPolygon(x.shape);
-		if(poly.type == "Polygon"){
-			return poly.coordinates;
+		hash.update(geo.user+"/"+geo.id);
+		newGeo.properties = {
+			"__key": hash.digest('hex'),
+			"__display": {
+				type: geo.propertyType,
+				value: geo.value
+			}
 		}
-		if(poly.type == "MultiPolygon"){
-			return poly.coordinates[0];
-		}
-		return [];
+		return newGeo;
 	});
-	const jsonBbox = bbox({type: "MultiPolygon", coordinates: coordsOnly});
+
 	return {
 			props: {
-					geoJSONs: geoJSONs,
+					geoJSONs,
 					creatorId: quizDetails.user,
 					quizId: quizDetails.id,
 					title: quizDetails.title,
 					defaultMap: quizDetails.defaultMap,
 					displayValues: quizDetails.displayValues,
-					bbox: jsonBbox,
+					bbox: bboxFromMany(geoJSONs),
 					error: false,
-					isLoggedIn: loggedInAs,
-					isFavourited: isFavourited
+					isLoggedIn,
+					isFavourited
 			}
 	};
 }

@@ -211,6 +211,13 @@ const structureQueries = [
 	},
 	function removeUnnecessaryCountryCode(db){
 		db.prepare(`ALTER TABLE words DROP COLUMN country`).run();
+	},
+	function removeUnnecessaryCategoryInfo(db){
+		db.prepare(`DROP TABLE categories`).run();
+	},
+	function addPropertyUser(db){
+		db.prepare(`ALTER TABLE geoJSONProperties ADD COLUMN propertyUser TEXT`).run();
+		db.prepare(`UPDATE geoJSONProperties SET propertyUser = user`).run();
 	}
 ]; // adding / removing columns should be done by a new query here to ensure database is versioned correctly
 
