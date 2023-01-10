@@ -18,7 +18,7 @@ export default function checkSession(sessionId, refreshSession = true){
 		user: {
 			id: session.id,
 			displayName: session.displayName,
-			permissions: session.permissions,
+			permissions: session.permissions.split("\x1d"),
 			memberSince: session.memberSince
 		},
 		expiry: session.expiry
