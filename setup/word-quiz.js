@@ -1,102 +1,107 @@
 import Database from "better-sqlite3";
 import axios from "axios";
-import from "url";
+import url from "url";
 
 const countries = {
-	"bd": {
-		"englishName": "Bangladesh",
-		"wikidataCode": "Q902",
-		"localName": "বাংলাদেশ"
+	bd: {
+		englishName: "Bangladesh",
+		wikidataCode: "Q902",
+		localName: "বাংলাদেশ"
 	},
-	"jo":{
-		"englishName": "Jordan",
-		"wikidataCode": "Q810",
-		"localName": " الأردن"
+	jo:{
+		englishName: "Jordan",
+		wikidataCode: "Q810",
+		localName: " الأردن"
 	},
-	"kr": {
-		"englishName": "South Korea",
-		"wikidataCode": "Q884",
-		"localName": "남한"
+	kr: {
+		englishName: "South Korea",
+		wikidataCode: "Q884",
+		localName: "남한"
 	},
-	"ps": {
-		"englishName": "Palestine",
-		"wikidataCode": "Q219060",
-		"localName": "فلسطين"
+	ps: {
+		englishName: "Palestine",
+		wikidataCode: "Q219060",
+		localName: "فلسطين"
 	},
-	"ru": {
-		"englishName": "Russia",
-		"wikidataCode": "Q159",
-		"localName": "Россия"
+	ru: {
+		englishName: "Russia",
+		wikidataCode: "Q159",
+		localName: "Россия"
 	},
-	"th":{
-		"englishName": "Thailand",
-		"wikidataCode": "Q869",
-		"localName": "ประเทศไทย"
+	th:{
+		englishName: "Thailand",
+		wikidataCode: "Q869",
+		localName: "ประเทศไทย"
 	},
-	"tn": {
-		"englishName": "Tunisia",
-		"wikidataCode": "Q948",
-		"localName": "تونس"
+	tn: {
+		englishName: "Tunisia",
+		wikidataCode: "Q948",
+		localName: "تونس"
+	},
+	kh: {
+		englishName: "Cambodia",
+		wikidataCode: "Q424",
+		localName: "កម្ពុជា"
 	}
 };
 
 const languages = {
 	"ar": {
-		"englishName": "Arabic",
-		"localName": "اَلْعَرَبِيَّةُ",
-		"ttsCode": "ar-XA",
-		"countries": [
+		englishName: "Arabic",
+		localName: "اَلْعَرَبِيَّةُ",
+		ttsCode: "ar-XA",
+		countries: [
 			"jo",
 			"ps",
 			"tn"
 		],
-		"extraPlaceCodes": [],
-		"deletions": {
-			"english": [],
-			"local": []
+		extraPlaceCodes: [],
+		deletions: {
+			english: [],
+			local: []
 		} 
 	},
-	"bn": {
-		"englishName": "Bengali",
-		"localName": "বাংলা",
-		"ttsCode": "bn-IN",
-		"countries": [
+	bn: {
+		englishName: "Bengali",
+		localName: "বাংলা",
+		ttsCode: "bn-IN",
+		countries: [
 			"bd"
 		],
-		"extraPlaceCodes": [
+		extraPlaceCodes: [
 			"Q152732", //district of bangladesh
 			"Q620471" // upazila of bangladesh
 		],
-		"deletions": {
-			"english": [
+		deletions: {
+			english: [
 				/ district/ui,
 				/ (sadar )?upazila/ui
 			],
-			"local": [
+			local: [
 				/ জেলা/ui,
 				/ (সদর )?উপজেলা/ui
 			]
 		}
 	},
-	"ko": {
-		"englishName": "Korean",
-		"localName": "한국어",
-		"ttsCode": "ko-KR",
-		"countries": [
+	ko: {
+		englishName: "Korean",
+		localName: "한국어",
+		ttsCode: "ko-KR",
+		countries: [
 			"kr"
 		],
-		"extraPlaceCodes": [
+		extraPlaceCodes: [
 			"Q29045252", // city of South Korea
 			"Q483515", // myeon
 			"Q42132", // eup
 			"Q483519" // ri
 		],
-		"deletions": {
+		deletions: {
 			"english": [
 				/[ -]?myeon/ui,
 				/[ -]?ri$/ui
 			],
-			"local": [
+			local: [
 				/면/ui,
 				/리$/ui,
 				/시$/ui,
@@ -105,39 +110,68 @@ const languages = {
 			]
 		}
 	},
-	"ru": {
-		"englishName": "Russian",
-		"localName": "Русский",
-		"ttsCode": "ru-RU",
-		"countries": [
+	ru: {
+		englishName: "Russian",
+		localName: "Русский",
+		ttsCode: "ru-RU",
+		countries: [
 			"ru"
 		],
-		"extraPlaceCodes": [
+		extraPlaceCodes: [
 			"Q2514025" // posylok
 		],
-		"deletions": {
+		deletions: {
 			"english": [],
 			"local": []
 		}
 	},
-	"th": {
-		"englishName": "Thai",
-		"localName": "ไทย",
-		"ttsCode": "th-TH",
-		"countries": [
+	th: {
+		englishName: "Thai",
+		localName: "ไทย",
+		ttsCode: "th-TH",
+		countries: [
 			"th"
 		],
-		"extraPlaceCodes": [
+		extraPlaceCodes: [
 			"Q50198", // province of Thailand
 			"Q1077097" // tambon
 		],
-		"deletions":{
-			"english": [],
-			"local": [
+		deletions:{
+			english: [],
+			local: [
 				/(เทศบาล)?เมือง"/ui,
 				/จังหวัด/ui,
 				/แหล่งโบราณคดี/ui,
 				/ตำบล/ui
+			]
+		}
+	},
+	km:{
+		englishName: "Khmer",
+		localName: "ខ្មែរ",
+		ttsCode: "",
+		countries: [
+			"kh"
+		],
+		extraPlaceCodes: [
+			"Q5154047",
+			"Q7252589",
+			"Q14846918"
+		],
+		deletions: {
+			english: [
+				/ Commune/ui,
+				/ Province/ui,
+				/ District/ui,
+				/ Municipality/ui,
+				/ Sangkat/ui
+			],
+			local: [
+				/^ក្រុង/ui, //krong (city)
+				/^ឃុំ$/ui, //khoum (commune)
+				/សង្កាត់/ui, //sangkat,
+				/^ខេត្/ui, //khetta (province),
+				/^ស្រុក/ui, //srok (district)
 			]
 		}
 	}
