@@ -1,6 +1,8 @@
 import Head from "next/head";
 import fs from "fs";
 import {flag} from "country-emoji";
+import {Index} from "flexsearch";
+import {useState} from "react";
 const emojiFixes = {
 	aland: "🇦🇽",
 	"cocos islands": "🇨🇨",
@@ -14,8 +16,14 @@ const emojiFixes = {
 }
 const emoji = country => emojiFixes[country] || flag(country);
 
-export default function coverageDates(props){
-	const countryRows = props.countries.map(x => 
+export default function coverageDates({countries}){
+	const [searchText, setSearchText] = useState("");
+	const index = new Index({tokenize: "full"});
+	countries.forEach(country => index.add(country.url, country.display));
+	const searchResults = index.search(searchText);
+	const displayedCountries = searchText ? countries.filter(x => searchResults.includes(x.url)) : countries;
+
+	const countryRows = displayedCountries.map(x => 
 		<div>
 			<b>{emoji(x.display)} {x.display}</b>: <a href={`coverage-dates/${x.url}`}>view</a> or <a href={`coverage-dates/${x.url}.json`}>download</a>
 		</div>
@@ -31,6 +39,7 @@ export default function coverageDates(props){
 				</p>
 				<p><i>last update: 30 november 2022</i></p>
 				<h2>available countries</h2>
+				search countries: <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
 				<section style={{
 					display: "grid",
 					gridGap: "0.25em",
