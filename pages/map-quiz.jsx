@@ -26,6 +26,7 @@ function CountryContainer({quizzes, category, categoryInfo}){
 				fontFamily: "TwemojiFlags, Manrope",
 				background: "rgb(0,0,0,0.2)",
 				borderRadius: "30px 30px 0px 0px",
+				margin: 0
 			}}>
 				{categoryInfo.emoji} {categoryInfo.name}
 			</h2>
