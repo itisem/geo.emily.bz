@@ -1,5 +1,5 @@
 import Head from "next/head";
-import ToolDescription from '/components/tool-description';
+import ToolDescription from '/components/home/tool-description';
 
 export default function Home() {
 	return (

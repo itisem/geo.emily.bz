@@ -21,9 +21,8 @@ import {useState, useEffect, useCallback, useMemo} from 'react';
 import Head from "next/head";
 
 import SelectorButtonGroup from "/components/selector-button-group";
-import Footer from "/components/footer";
 import Button from "/components/button";
-import FavouriteButton from "/components/favourite-button";
+import FavouriteButton from "/components/map-quiz/favourite-button";
 import ErrorPage from "/components/error-page";
 
 import MapQuiz from "/utils/map-quiz/game";

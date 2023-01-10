@@ -2,7 +2,7 @@ import Head from "next/head";
 import {Index} from "flexsearch";
 import {useState} from "react";
 
-import FavouriteQuizzes from "/components/favourite-quizzes";
+import FavouriteQuizzes from "/components/map-quiz/favourite-quizzes";
 
 import openDB from "/utils/db/open-db";
 import checkSession from "/utils/users/check-session";

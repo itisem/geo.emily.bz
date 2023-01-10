@@ -2,7 +2,7 @@ import getUserQuizzes from "/utils/map-quiz/get-user-quizzes";
 import getCategoryQuizzes from "/utils/map-quiz/get-category-quizzes";
 import getCategoryInfo from "/utils/map-quiz/get-category-info";
 import Head from "next/head";
-import QuizContainer from "/components/quiz-container";
+import QuizContainer from "/components/map-quiz/quiz-container";
 
 export default function MapQuizByCategory(props){
 	const title = props.categoryType == "user" ? `quizzes by ${props.category}` : `${props.category} quizzes`;

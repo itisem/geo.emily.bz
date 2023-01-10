@@ -3,8 +3,8 @@ import getUserQuizzes from "/utils/map-quiz/get-user-quizzes";
 import getFavouriteQuizzes from "/utils/map-quiz/get-favourite-quizzes";
 import getQuizPlayers from "/utils/map-quiz/get-quiz-players";
 import Button from "/components/button";
-import QuizContainer from "/components/quiz-container";
-import FavouriteQuizzes from "/components/favourite-quizzes";
+import QuizContainer from "/components/map-quiz/quiz-container";
+import FavouriteQuizzes from "/components/map-quiz/favourite-quizzes";
 import ErrorPage from "/components/error-page";
 import Head from "next/head";
 

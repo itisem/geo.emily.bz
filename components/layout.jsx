@@ -1,4 +1,3 @@
-import Footer from "./footer";
 import styles from "./layout.module.css";
 import {useState, useEffect} from "react";
 import cookie from "cookie";
@@ -28,7 +27,9 @@ export default function Layout({children}) {
 				</menu>
 			</header>
 			<main className={styles.main}>{children}</main>
-			<Footer />
+			<footer className={styles.footer}>
+				<a href="https://discord.gg/td7bN9HKhX">feature suggestions discord</a>
+			</footer>
 		</div>
 	)
 }
