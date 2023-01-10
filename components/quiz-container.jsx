@@ -1,5 +1,5 @@
 import styles from "./quiz-container.module.css";
-import {useState, useEffect} from "react";
+import {useState} from "react";
 import {Index} from "flexsearch";
 
 export default function QuizContainer({quizzes, quizInfo}){
@@ -13,7 +13,7 @@ export default function QuizContainer({quizzes, quizInfo}){
 	return (
 		<section className={styles.quizzes}>
 			{quizzes.length > 10 ?
-				<>filter quiz: <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} /></> :
+				<>filter quizzes: <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} /></> :
 				""
 			} 
 			<div className={styles.quizcontainer}>
