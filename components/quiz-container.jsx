@@ -5,7 +5,7 @@ import lunr from "lunr";
 const createSearch = (quizzes) => lunr(function(){
 	this.field("title");
 	this.ref("id");
-	quizzes.forEach(quiz => {console.log(quiz); this.add(quiz)});
+	quizzes.forEach(quiz => this.add(quiz));
 });
 
 export default function QuizContainer({quizzes, quizInfo}){
