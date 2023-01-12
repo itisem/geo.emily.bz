@@ -14,7 +14,6 @@ export default function HighlightedQuizzes({items, hasSearch, categoryInfo}){
 	const quizzesByCategory = getQuizzesByCategory(items);
 	return (
 		<>
-			<h2>highlighted quizzes</h2>
 			<section className={styles["highlighted-quizzes"]}>
 				{quizzesByCategory.map(info => (
 					<CountryContainer

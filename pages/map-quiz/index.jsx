@@ -19,6 +19,7 @@ export default function MapQuizPage({quizzes, favouriteQuizzes, categoryInfo}){
 			</Head>
 			<h1>map quizzes</h1>
 			<FavouriteQuizzes quizzes={favouriteQuizzes} includeButton={true} />
+			<h2>highlighted quizzes</h2>
 			<SearchWrapper
 				searchBarText="find quiz"
 				sizeLimit="0"
