@@ -1,4 +1,4 @@
-.gameover{
+.game-over{
 	position: absolute;
 	top: 50%;
 	left: 50%;
@@ -12,6 +12,6 @@
 	font-size: 1.5em;
 }
 
-.gameovertext{
+.game-over-text{
 	font-size: 1.5em;
 }

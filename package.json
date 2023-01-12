@@ -31,6 +31,7 @@
     "flexsearch": "^0.7.31",
     "next": "latest",
     "object-hash": "^3.0.0",
+    "pluralize": "^8.0.0",
     "pretty-ms": "^8.0.0",
     "react": "latest",
     "react-dom": "latest"

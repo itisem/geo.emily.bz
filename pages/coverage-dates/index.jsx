@@ -1,33 +1,10 @@
 import Head from "next/head";
 import fs from "fs";
-import {flag} from "country-emoji";
-import {Index} from "flexsearch";
 import {useState} from "react";
-const emojiFixes = {
-	aland: "🇦🇽",
-	"cocos islands": "🇨🇨",
-	curacao: "🇨🇼",
-	eswatini: "🇸🇿",
-	laos: "🇱🇦",
-	"st pierre and miquelon": "🇵🇲",
-	"south georgia and south sandwich islands": "🇬🇸",
-	uk: "🇬🇧",
-	"us virgin islands": "🇻🇮"
-}
-const emoji = country => emojiFixes[country] || flag(country);
+import SearchWrapper from "/components/search-wrapper";
+import CountryList from "/components/coverage-dates/country-list";
 
 export default function coverageDates({countries}){
-	const [searchText, setSearchText] = useState("");
-	const index = new Index({tokenize: "full"});
-	countries.forEach(country => index.add(country.url, country.display));
-	const searchResults = index.search(searchText);
-	const displayedCountries = searchText ? countries.filter(x => searchResults.includes(x.url)) : countries;
-
-	const countryRows = displayedCountries.map(x => 
-		<div>
-			<b>{emoji(x.display)} {x.display}</b>: <a href={`coverage-dates/${x.url}`}>view</a> or <a href={`coverage-dates/${x.url}.json`}>download</a>
-		</div>
-	);
 	return (
 		<>
 			<Head><title>coverage date maps</title></Head>
@@ -38,17 +15,9 @@ export default function coverageDates({countries}){
 					you can view the maps here, or download them and import them into <a href="https://map-making.app">map-making.app</a>.
 				</p>
 				<p><i>last update: 30 november 2022</i></p>
-				<h2>available countries</h2>
-				search countries: <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-				<section style={{
-					display: "grid",
-					gridGap: "0.25em",
-					gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-					gridAutoFlow: "dense",
-					fontFamily: "TwemojiFlags, Manrope"
-				}}>
-						{countryRows}
-				</section>
+				<SearchWrapper items={countries} searchBarText="find country">
+					<CountryList />
+				</SearchWrapper>
 				<h2>faq & updates</h2>
 				<ul style={{listStyleType: "none"}}>
 					<li><details>
@@ -78,7 +47,7 @@ export default function coverageDates({countries}){
 
 export function getServerSideProps(){
 	let countries = fs.readdirSync(process.cwd() + "/public/coverage-dates");
-	countries = countries.map(x => {return {url: x.slice(0, -5), display: x.slice(0, -5).replaceAll("-", " ")}});
+	countries = countries.map(x => {return {id: x.slice(0, -5), value: x.slice(0, -5).replaceAll("-", " ")}});
 	return {
 		props: {
 			countries: countries

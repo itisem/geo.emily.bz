@@ -1,4 +1,4 @@
-.imagequestion, .textquestion{
+.image-question, .text-question{
 	position: absolute;
 	top: 60px;
 	left: 50%;
@@ -14,6 +14,6 @@
 	border-radius: 10px;
 }
 
-.textquestion{
+.text-question{
 	background: var(--bglight);
 }

@@ -13,7 +13,7 @@ export default function FavouriteQuizzes({quizzes}){
 	return (
 		<>
 			<h2>your favourite quizzes</h2>
-			<QuizContainer quizzes={favs} quizInfo = {quiz => (
+			<QuizContainer quizzes={favs} quizInfo={quiz => (
 				<>
 					by {quiz.user.displayName}<br />
 					<a onClick={() => unfavourite(quiz.id, quiz.user.id)} className={styles.unfavourite}>remove</a>

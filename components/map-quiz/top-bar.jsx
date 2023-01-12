@@ -3,7 +3,7 @@ import Button from "../button";
 export default function TopBar({question, controls, visibility}){
 	if(!visibility) return <></>;
 	return (
-		<div className={question.imageQuestion ? styles.imagequestion : styles.textquestion}>
+		<div className={question.imageQuestion ? styles["image-question"] : styles["text-question"]}>
 			<div dangerouslySetInnerHTML={{__html: question.html}}></div>
 			<div>
 				<Button onClick={controls.prev}>prev ←</Button>

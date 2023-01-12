@@ -7,17 +7,19 @@ import QuizContainer from "/components/map-quiz/quiz-container";
 import FavouriteQuizzes from "/components/map-quiz/favourite-quizzes";
 import ErrorPage from "/components/error-page";
 import Head from "next/head";
+import pluralize from "pluralize";
 
 export default function Me(props){
 	if(props.error){
 		return (<ErrorPage errorMessage={props.errorMessage} />);
 	}
 	const playInfo = id => {if(!props.players[id]) return {players: 0, plays: 0}; return props.players[id];}
+	const infoText = id => {const info = playInfo(id); return `${pluralize("player", info.players, true)}, ${pluralize("play", info.plays, true)}`}
 	const quizzes = <>
 		<h2>your quizzes</h2>
 		<QuizContainer
 			quizzes={props.quizzes}
-			quizInfo={quiz => (<i>{playInfo(quiz.id).players} players, {playInfo(quiz.id).plays} plays</i>)}
+			quizInfo={quiz => (<i>{infoText(quiz.id)}</i>)}
 		/>
 	</>;
 	return (<>

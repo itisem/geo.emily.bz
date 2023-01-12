@@ -1,54 +1,16 @@
 import Head from "next/head";
-import {Index} from "flexsearch";
 import {useState} from "react";
 
 import FavouriteQuizzes from "/components/map-quiz/favourite-quizzes";
+import SearchWrapper from "/components/search-wrapper";
+import HighlightedQuizzes from "/components/map-quiz/highlighted-quizzes";
 
 import openDB from "/utils/db/open-db";
 import checkSession from "/utils/users/check-session";
 import getFavouriteQuizzes from "/utils/map-quiz/get-favourite-quizzes";
 
-function getQuizzesByCategory(quizzes){
-	let quizzesByCategory = {};
-	for(let quiz of quizzes){
-		if(!quizzesByCategory[quiz.category]) quizzesByCategory[quiz.category] = [];
-		quizzesByCategory[quiz.category].push(quiz);
-	}
-	return quizzesByCategory;
-}
-
-function CountryContainer({quizzes, category, categoryInfo, frontPageOnly}){
-	const linkMore = !quizzes.every(x => x.isFrontPage) && frontPageOnly;
-	return (
-		<section key={category} style={{borderRadius: 30, background: "rgb(0,0,0,0.1)", maxWidth: 290}}>
-			<h2 style={{
-				textAlign: "center",
-				fontFamily: "TwemojiFlags, Manrope",
-				background: "rgb(0,0,0,0.2)",
-				borderRadius: "30px 30px 0px 0px",
-				margin: 0
-			}}>
-				{categoryInfo.emoji} {categoryInfo.name}
-			</h2>
-			<ul>
-				{quizzes.map(quiz => {
-					if(quiz.isFrontPage || !frontPageOnly){
-						return (<li key={quiz.alias}><a href={"/map-quiz/" + quiz.alias}>{quiz.altTitle}</a></li>)
-					}
-				})}
-			</ul>
-			{linkMore ? <p className="centered"><a href={`/map-quiz/${category}`}>more quizzes</a></p> : ""}
-		</section>
-	);
-}
-
 export default function MapQuizPage({quizzes, favouriteQuizzes, categoryInfo}){
-	const [searchText, setSearchText] = useState("");
-	const index = new Index({tokenize: "full"});
-	quizzes.forEach(quiz => index.add(quiz.alias, categoryInfo[quiz.category].name + " " + quiz.altTitle));
-	const searchResults = index.search(searchText);
-	const displayedQuizzes = searchText ? quizzes.filter(x => searchResults.includes(x.alias)) : quizzes;
-	const quizzesByCategory = getQuizzesByCategory(displayedQuizzes);
+	quizzes.forEach(quiz => {quiz.id = quiz.alias; quiz.value = categoryInfo[quiz.category].name + " " + quiz.altTitle;});
 
 	return (
 		<>
@@ -57,27 +19,13 @@ export default function MapQuizPage({quizzes, favouriteQuizzes, categoryInfo}){
 			</Head>
 			<h1>map quizzes</h1>
 			<FavouriteQuizzes quizzes={favouriteQuizzes} includeButton={true} />
-			<h2>highlighted quizzes</h2>
-			search quizzes: <input type="text" value={searchText} onChange={(e) => setSearchText(e.target.value)} />
-			<section 
-				id="all-quizzes"
-				style={{
-					display: "grid",
-					gridGap: "10px",
-					gridTemplateColumns: "repeat(auto-fit, minmax(290px, 1fr))",
-					gridAutoFlow: "dense",
-				}}
+			<SearchWrapper
+				searchBarText="find quiz"
+				sizeLimit="0"
+				items={quizzes}
 			>
-				{Object.keys(quizzesByCategory).map(category => 
-					<CountryContainer
-						quizzes={quizzesByCategory[category]}
-						category={category}
-						categoryInfo={categoryInfo[category]}
-						key={category}
-						frontPageOnly={!searchText}
-					/>
-				)}
-			</section>
+				<HighlightedQuizzes categoryInfo={categoryInfo} />
+			</SearchWrapper>
 		</>
 	);
 }
