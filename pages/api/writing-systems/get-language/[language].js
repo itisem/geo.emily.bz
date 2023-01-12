@@ -7,5 +7,5 @@ export default function getLanguage(req, res){
 		WHERE id = ?
 	`);
 	const {language} = req.query;
-	res.status(200).json({error: false, language: query.get(language))};
+	res.status(200).json({error: false, language: query.get(language)});
 }
