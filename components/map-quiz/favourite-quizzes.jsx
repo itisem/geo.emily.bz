@@ -6,7 +6,7 @@ export default function FavouriteQuizzes({quizzes}){
 	let [favs, setFavs] = useState(quizzes);
 
 	const unfavourite = (id, creator) => {
-		fetch(`/api/favourite/${creator}/${id}`, {method: "DELETE"}).then(x => x.json()).then(x => setFavs(x));
+		fetch(`/api/map-quiz/favourite/${creator}/${id}`, {method: "DELETE"}).then(x => x.json()).then(x => setFavs(x));
 	}
 
 	if(favs.length === 0) return (<></>);

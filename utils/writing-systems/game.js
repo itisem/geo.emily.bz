@@ -27,12 +27,12 @@ export default class WritingGame{
 	async setLanguage(language){
 		this.language = language;
 		this.words = [];
-		return fetch("/api/get-language/" + language).then(
+		return fetch("/api/writing-systems/get-language/" + language).then(
 			r => r.json()
 		).then(
 			r => {
-				this.hasTTS = !!r.ttsCode;
-				this.tts = new TextReader(r.ttsCode, this.apiKey);
+				this.hasTTS = !!r.language.ttsCode;
+				this.tts = new TextReader(r.language.ttsCode, this.apiKey);
 			}
 		);
 	}
@@ -49,12 +49,12 @@ export default class WritingGame{
 	}
 
 	async loadWords(){
-		return fetch("/api/get-words/" + this.language).then(
+		return fetch("/api/writing-systems/get-words/" + this.language).then(
 			r => r.json()
 		).then(
 			r => {
 				this.words = [];
-				for(let word of r){
+				for(let word of r.words){
 					this.words.push([word.localName, word.englishName]);
 				}
 			}

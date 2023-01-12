@@ -13,11 +13,11 @@ export default function RightIcons({visibility, quiz, isLoggedIn, onClick}){
 					() => {
 						if(favourited){
 							setFavourited(false);
-							fetch(`/api/favourite/${quiz.creator}/${quiz.id}`, {method: "DELETE"});
+							fetch(`/api/map-quiz/favourite/${quiz.creator}/${quiz.id}`, {method: "DELETE"});
 						}
 						else{
 							setFavourited(true);
-							fetch(`/api/favourite/${quiz.creator}/${quiz.id}`, {method: "PUT"});
+							fetch(`/api/map-quiz/favourite/${quiz.creator}/${quiz.id}`, {method: "PUT"});
 						}
 					}
 				}

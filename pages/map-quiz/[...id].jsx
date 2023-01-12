@@ -108,7 +108,7 @@ export default function MapQuizPage(props){
 		if(quiz.questions.length == 0){
 			setTimeDiff(new Date().getTime() - startTime);
 			setVisibleMenu("game-over");
-			fetch(`/api/log-quiz-completion/${props.creatorId}/${props.quizId}`);
+			fetch(`/api/map-quiz/complete/${props.creatorId}/${props.quizId}`);
 		}
 	}, [forceClick, currentQuestion, roundWrong])
 

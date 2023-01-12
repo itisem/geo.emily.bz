@@ -17,5 +17,5 @@ export default function reportWord(req, res){
 		VALUES(:language, :localName, :englishName, :notes, :reportedBy)`).run({
 			language, localName, englishName, notes, reportedBy
 	});
-	res.send(1);
+	res.send({error: false});
 }
